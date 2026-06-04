@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TVK Homepage</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans Tamil',sans-serif}
+body{background:#ddd;color:#ddd;overflow-x:hidden}
+:root{--gold:#ff0000;--red:#c8102e}
+#loader{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999}
+#loader img{width:140px;animation:spin 2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+nav{position:fixed;top:0;width:100%;padding:15px 5%;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);z-index:1000}
+/* Navigation */
+nav{
+    position:fixed;
+    top:0;
+    width:100%;
+    padding:15px 5%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:rgba(0,0,0,.4);
+    backdrop-filter:blur(10px);
+    z-index:1000;
+}
+
+nav img{
+    width:50px;
+}
+
+.desktop-nav{
+    display:flex;
+    gap:20px;
+    list-style:none;
+}
+
+.desktop-nav a{
+    color:#fff;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.desktop-nav a:hover{
+    color:var(--gold);
+}
+
+/* Hamburger */
+.menu-btn{
+    display:none;
+    font-size:32px;
+    color:#fff;
+    cursor:pointer;
+}
+
+/* Side Nav */
+.side-nav{
+    position:fixed;
+    top:0;
+    right:-280px;
+    width:280px;
+    height:100vh;
+    background:#111;
+    padding-top:80px;
+    transition:.4s;
+    z-index:2000;
+    box-shadow:-5px 0 20px rgba(0,0,0,.5);
+}
+
+.side-nav a{
+    display:block;
+    color:#fff;
+    text-decoration:none;
+    padding:18px 30px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    transition:.3s;
+}
+
+.side-nav a:hover{
+    background:var(--red);
+}
+
+.side-nav.active{
+    right:0;
+}
+
+.close-btn{
+    position:absolute;
+    top:15px;
+    right:20px;
+    font-size:36px;
+    color:#fff;
+    cursor:pointer;
+}
+
+/* Overlay */
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    opacity:0;
+    visibility:hidden;
+    transition:.3s;
+    z-index:1500;
+}
+
+.overlay.active{
+    opacity:1;
+    visibility:visible;
+}
+
+/* Mobile */
+@media(max-width:900px){
+
+    .desktop-nav{
+        display:none;
+    }
+
+    .menu-btn{
+        display:block;
+    }
+
+    .hero h1{
+        font-size:2.5rem;
+    }
+
+    .grid2{
+        grid-template-columns:1fr;
+    }
+}
+.hero{height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative}
+.hero:before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.65)),url('https://tvkassets.minsky.studio/media/Kanyakumari_Campaign_Cover-1600x1067.jpg') center/cover}
+.hero>*{position:relative;z-index:2}
+.hero h1{font-size:4rem;color:var(--gold)}
+.btn{display:inline-block;margin-top:20px;padding:14px 28px;background:var(--gold);color:#000;text-decoration:none;border-radius:40px}
+section{padding:90px 8%}
+.title{text-align:center;color:var(--gold);font-size:2.5rem;margin-bottom:40px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.card{background:#141414;border-radius:20px;padding:25px}
+.card img,.grid2 img{width:100%;border-radius:18px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.gallery img{width:100%;height:260px;object-fit:cover;border-radius:16px;transition:.4s}
+.gallery img:hover{transform:scale(1.04)}
+.district{background:url('https://tvkvijay.com/districts/flag-vj.png') center/contain no-repeat;height:350px}
+footer{padding:60px 20px;background:#fff;text-align:center;color:#ff0000;}
+.reveal{opacity:0;transform:translateY(40px);transition:1s}
+.reveal.active{opacity:1;transform:none}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.hero h1{font-size:2.5rem}nav ul{display:none}}
+</style>
+</head>
+<body>
+<div id="loader"><img src="https://media.assettype.com/kizhakkunews/2024-08-22/wvbwdm7s/Screenshot%20(110).png?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true"></div>
+
+<nav>
+    <div class="logo">
+        <img src="https://media.assettype.com/kizhakkunews/2024-08-22/wvbwdm7s/Screenshot%20(110).png?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true">
+    </div>
+
+    <ul class="desktop-nav">
+        <li><a href="#leader">தலைவர்</a></li>
+        <li><a href="#ideology">கொள்கை</a></li>
+    </ul>
+
+    <div class="menu-btn" onclick="openMenu()">☰</div>
+</nav>
+
+<!-- Mobile Side Navigation -->
+<div id="sideNav" class="side-nav">
+    <span class="close-btn" onclick="closeMenu()">×</span>
+
+    <a href="#leader" onclick="closeMenu()">தலைவர்</a>
+    <a href="#ideology" onclick="closeMenu()">கொள்கை</a>
+</div>
+
+<div id="overlay" class="overlay" onclick="closeMenu()"></div>
+
+
+
+
+
+<section class="hero">
+<div>
+<h1>தமிழக வெற்றிக் கழகம்</h1>
+<p>பிறப்பொக்கும் எல்லா உயிர்க்கும்</p>
+<a class="btn" href="#leader">மேலும் அறிய</a>
+</div>
+</section>
+
+
+
+
+<section>
+<!--<h2 class="title reveal">அறிவிப்புகள்</h2>-->
+<div class="card reveal">
+<img src="https://tvkvijay.com/page-home/ann-pdf.png">
+</div>
+</section>
+
+
+
+
+
+
+<section id="leader">
+<h2 class="title reveal">தலைவர்</h2>
+<div class="grid2 reveal">
+<img src="https://tvkvijay.com/footer/thalaivar.png">
+<div class="card"><h3>திரு.ச. ஜோசப் விஜய்</h3><p>கழகத்தின் தலைவர்.</p></div>
+</div>
+</section>
+
+<section id="ideology">
+<h2 class="title reveal">கொள்கை</h2>
+<div class="grid2 reveal">
+<div class="card"><p>"மதச்சார்பற்ற சமூக நீதி" (Secular Social Justice) <br><br>"மதச்சார்பற்ற சமூக நீதி" என்பது மதம், ஜாதி, இனம் ஆகியவற்றைக் கடந்து, சமூகத்தின் அனைத்து மக்களுக்கும் சமமான உரிமைகள், வாய்ப்புகள், மற்றும் வளங்களை உறுதி செய்வதாகும்.</p></div>
+<img src="https://tvkassets.minsky.studio/media/ideology.png">
+</div>
+</section>
+
+
+
+<footer>
+<h2>தமிழக வெற்றிக் கழகம்</h2>
+<p>TVK Homepage</p>
+</footer>
+
+<script>
+window.onload=()=>setTimeout(()=>document.getElementById('loader').style.display='none',1000);
+const ob=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('active')}),{threshold:.2});
+document.querySelectorAll('.reveal').forEach(x=>ob.observe(x));
+
+</script>
+<script>
+function openMenu(){
+    document.getElementById("sideNav").classList.add("active");
+    document.getElementById("overlay").classList.add("active");
+}
+
+function closeMenu(){
+    document.getElementById("sideNav").classList.remove("active");
+    document.getElementById("overlay").classList.remove("active");
+}
+</script>
+<script>
+function openMenu(){
+    document.getElementById("sideNav").classList.add("active");
+    document.getElementById("overlay").classList.add("active");
+}
+
+function closeMenu(){
+    document.getElementById("sideNav").classList.remove("active");
+    document.getElementById("overlay").classList.remove("active");
+}
+</script>
+</body>
+</html>
