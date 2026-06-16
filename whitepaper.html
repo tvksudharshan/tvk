@@ -147,7 +147,19 @@ footer{padding:60px 20px;background:#fff;text-align:center;color:#ff0000;}
 .reveal{opacity:0;transform:translateY(40px);transition:1s}
 .reveal.active{opacity:1;transform:none}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}.hero h1{font-size:2.5rem}nav ul{display:none}}
-.nk:hover{background-color:red;color:yellow;}
+.nk {
+  /* Default styles */
+  background-color: lime;
+  color: black;
+  transition: 0.3s;
+}
+
+.nk:hover {
+  /* Styles applied on hover */
+  background-color: red;
+  color: white;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -208,7 +220,7 @@ footer{padding:60px 20px;background:#fff;text-align:center;color:#ff0000;}
 
     <a class="nk" href="https://financedept.tn.gov.in/en/my-documents/2020/07/TN_White_Paper_English-2026.pdf"
        target="_blank"
-       style="display:inline-block;padding:15px 30px;background:lime;color:#000;text-decoration:none;border-radius:8px;font-size:18px;font-weight:600;">
+       style="display:inline-block;padding:15px 30px;text-decoration:none;border-radius:8px;font-size:18px;font-weight:600;">
        PDF பதிவிறக்கம் (Download PDF)
     </a>
 </div>
