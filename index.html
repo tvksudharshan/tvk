@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TVK Homepage</title>
+<script src="masterpage.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans Tamil',sans-serif}
@@ -152,32 +153,12 @@ footer{padding:60px 20px;background:#fff;text-align:center;color:#ff0000;}
 <body>
 
 
-<nav>
-    <div class="logo">
-        <img src="https://media.assettype.com/kizhakkunews/2024-08-22/wvbwdm7s/Screenshot%20(110).png?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true">
-    </div>
 
-    <ul class="desktop-nav">
-          
-    <a href="index.html">முகப்புப் பக்கம் (Home)</a>
-		<a href="whitepaper.html">வெள்ளை அறிக்கை (TN Finance White Paper)</a>
-    <a href="ebwhitepaper.html">Energy-Department-வெள்ளை அறிக்கை</a>
-        
-    </ul>
-
-    <div class="menu-btn" onclick="openMenu()">☰</div>
-</nav>
-
-<!-- Mobile Side Navigation -->
-<div id="sideNav" class="side-nav">
-    <span class="close-btn" onclick="closeMenu()">×</span>
+<master-layout>
     
-    <a href="index.html">முகப்புப் பக்கம் (Home)</a>
-		<a href="whitepaper.html">வெள்ளை அறிக்கை (TN Finance White Paper)</a>
-    <a href="ebwhitepaper.html">Energy-Department-வெள்ளை அறிக்கை</a>
-        
-</div>
+</master-layout>
 
+	
 <div id="overlay" class="overlay" onclick="closeMenu()"></div>
 
 
