@@ -1,0 +1,59 @@
+const TN_ALLIANCES = [
+  {
+    id: 'tvk', name: 'TVK', short: 'TVK', color: '#A67C00',
+    seatsContested: 234, candidates: 234, womenCandidates: 28, projectedSeats: 8,
+  },
+  {
+    id: 'spa', name: 'SPA / DMK+', short: 'SPA', color: '#E53935',
+    seatsContested: 234, candidates: 234, womenCandidates: 24, projectedSeats: 148,
+  },
+  {
+    id: 'nda', name: 'NDA / ADMK+', short: 'NDA', color: '#43A047',
+    seatsContested: 234, candidates: 234, womenCandidates: 27, projectedSeats: 66,
+  },
+  {
+    id: 'ntk', name: 'NTK', short: 'NTK', color: '#b31818',
+    seatsContested: 234, candidates: 234, womenCandidates: 111, projectedSeats: 0,
+  },
+  {
+    id: 'ajpk', name: 'AJPK - AIPTMMK', short: 'AJPK', color: '#D4AC0D',
+    seatsContested: 234, candidates: 234, womenCandidates: 0, projectedSeats: 0,
+  },
+  {
+    id: 'others', name: 'Other Parties', short: 'OTH', color: '#607D8B',
+    seatsContested: 100, candidates: 500, womenCandidates: 50, projectedSeats: 0,
+  },
+  {
+    id: 'independent', name: 'Independents', short: 'IND', color: '#757575',
+    seatsContested: 500, candidates: 1558, womenCandidates: 182, projectedSeats: 12,
+  },
+];
+
+const TN_PARTIES = [
+  { id: 'dmk', code: 'DMK', name: 'Dravida Munnetra Kazhagam', alliance: 'spa', color: '#E53935', candidates: 0, seatsContested: 176, type: 'State Party', leader: 'M.K. Stalin', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/dmk.svg', won2021: 133 },
+  { id: 'inc', code: 'INC', name: 'Indian National Congress', alliance: 'spa', color: '#1565C0', candidates: 0, seatsContested: 28, type: 'National Party', leader: 'K. Selvaperunthagai', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/inc.svg', won2021: 18 },
+  { id: 'vck', code: 'VCK', name: 'Viduthalai Chiruthaigal Katchi', alliance: 'spa', color: '#1E90FF', candidates: 0, seatsContested: 8, type: 'State Party', leader: 'Thol. Thirumavalavan', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/vck.png', won2021: 4 },
+  { id: 'cpi', code: 'CPI', name: 'Communist Party of India', alliance: 'spa', color: '#B71C1C', candidates: 0, seatsContested: 5, type: 'National Party', leader: 'R. Mutharasan', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/cpi.svg', won2021: 2 },
+  { id: 'cpim', code: 'CPI(M)', name: 'Communist Party of India (Marxist)', alliance: 'spa', color: '#C62828', candidates: 0, seatsContested: 5, type: 'National Party', leader: 'K. Balakrishnan', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/cpi(m).svg', won2021: 2 },
+  { id: 'iuml', code: 'IUML', name: 'Indian Union Muslim League', alliance: 'spa', color: '#006600', candidates: 0, seatsContested: 2, type: 'State Party - Other', leader: 'K.M. Kader Mohideen', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/iuml.svg', won2021: 0 },
+  { id: 'dmdk', code: 'DMDK', name: 'Desiya Murpokku Dravida Kazhagam', alliance: 'spa', color: '#F57C00', candidates: 0, seatsContested: 10, type: 'State Party', leader: 'Premalatha Vijayakant', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/dmdk.png', won2021: 0 },
+
+  { id: 'aiadmk', code: 'ADMK', name: 'All India Anna Dravida Munnetra Kazhagam', alliance: 'nda', color: '#43A047', candidates: 0, seatsContested: 172, type: 'State Party', leader: 'K. Palaniswami', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/aiadmk.svg', won2021: 66 },
+  { id: 'bjp', code: 'BJP', name: 'Bharatiya Janata Party', alliance: 'nda', color: '#FF6F00', candidates: 0, seatsContested: 33, type: 'National Party', leader: 'Nainar Nagendran', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/bjp.svg', won2021: 4 },
+  { id: 'pmk', code: 'PMK', name: 'Pattali Makkal Katchi', alliance: 'nda', color: '#FFB300', candidates: 0, seatsContested: 18, type: 'Unrecognised', leader: 'Anbumani Ramadoss', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/pmk.svg', won2021: 5 },
+  { id: 'ammk', code: 'AMMK', name: 'Amma Makkal Munnettra Kazagam', alliance: 'nda', color: '#388E3C', candidates: 0, seatsContested: 11, type: 'Unrecognised', leader: 'T.T.V. Dhinakaran', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/ammk.jpg' },
+
+  { id: 'tvk', code: 'TVK', name: 'Tamilaga Vettri Kazhagam', alliance: 'tvk', color: '#A67C00', candidates: 0, seatsContested: 233, type: 'Unrecognised', leader: 'Vijay', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/tvk.jpg' },
+  { id: 'tvk_ind', code: 'IND', name: 'Independent', alliance: 'tvk', color: '#757575', candidates: 0, seatsContested: 1, type: 'Independent', leader: 'Premkumar. K', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/placeholder.png' },
+
+  { id: 'ntk', code: 'NTK', name: 'Naam Tamilar Katchi', alliance: 'ntk', color: '#b31818', candidates: 0, seatsContested: 234, type: 'State Party', leader: 'Seeman', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/ntk.jpg' },
+
+  { id: 'ajpk', code: 'AJPK', name: 'Aanaithinthiya Jananayaka Pathukappu Kazhagam', alliance: 'ajpk', color: '#F1C40F', candidates: 0, seatsContested: 29, type: 'Unrecognised', leader: 'S. Ramadoss', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/ajpk.jpg' },
+  { id: 'aiptmmk', code: 'AIPTMMK', name: 'All India Puratchi Thalaivar Makkal Munnettra Kazhagam', alliance: 'ajpk', color: '#16A085', candidates: 0, seatsContested: 78, type: 'Unrecognised', leader: 'V.K. Sasikala', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/placeholder.png' },
+
+  { id: 'bsp', code: 'BSP', name: 'Bahujan Samaj Party', alliance: 'others', color: '#1565C0', candidates: 0, seatsContested: 160, type: 'National Party', leader: 'H. Anandan', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/bsp.png' },
+  { id: 'tavk', code: 'TAVK', name: 'Tamizhaga Vaazhvurimai Katchi', alliance: 'others', color: '#7B1FA2', candidates: 0, seatsContested: 20, type: 'Unrecognised', leader: 'T. Velmurugan', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/tavk.png' },
+  { id: 'pt', code: 'PT', name: 'Puthiya Tamilagam', alliance: 'others', color: '#D32F2F', candidates: 0, seatsContested: 10, type: 'Unrecognised', leader: 'K. Krishnasamy', icon: 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/assets/party/pt.png' },
+  { id: 'oth', code: 'OTH', name: 'Other Parties', alliance: 'others', color: '#607D8B', candidates: 0, seatsContested: 0, type: 'Unrecognised', leader: '—' },
+  { id: 'ind', code: 'IND', name: 'Independent', alliance: 'independent', color: '#757575', candidates: 0, seatsContested: 0, type: 'Independent', leader: '—' },
+];

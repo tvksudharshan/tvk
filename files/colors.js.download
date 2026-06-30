@@ -1,0 +1,133 @@
+window.ASSET_BASE_URL = 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/';
+
+function getAssetUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  // Prepend base URL if it's a relative asset path
+  return window.ASSET_BASE_URL + path.replace(/^\//, '');
+}
+
+function partyColor(party) {
+  const code = getPartyCode(party);
+  
+  // 1. Try dynamic lookup from TN_PARTIES
+  if (typeof TN_PARTIES !== 'undefined') {
+    const found = TN_PARTIES.find(p => p.code === code || p.id === code.toLowerCase());
+    if (found && found.color) return found.color;
+  }
+
+  // 2. Legacy fallback map
+  const map = {
+    'DMK': '#E53935', 'INC': '#1565C0', 'CPI': '#B71C1C',
+    'CPI(M)': '#C62828', 'VCK': '#1E90FF', 'IUML': '#006600',
+    'MMK': '#0D47A1', 'MDMK': '#880E4F', 'AIADMK': '#43A047', 'ADMK': '#43A047',
+    'AMMK': '#388E3C', 'PMK': '#FFB300', 'BJP': '#FF6F00',
+    'DMDK': '#F57C00', 'TVK': '#A67C00', 'NTK': '#b31818',
+    'MNM': '#00838F', 'Others': '#607D8B', 'Independent': '#757575',
+    'PMK(R)': '#F1C40F', 'AIPTMMK': '#16A085',
+    'IJK': '#F08080', 'TMC(M)': '#00ACC1', 'TMMK': '#1B5E20', 'PB': '#FFB300', 'BSP': '#1565C0'
+  };
+  return map[code] || '#9E9E9E';
+}
+
+function allianceName(id) {
+  if (typeof TN_ALLIANCES !== 'undefined') {
+    const found = TN_ALLIANCES.find(a => a.id === id);
+    if (found) return found.short || found.name;
+  }
+  const map = { spa: 'SPA', nda: 'NDA', tvk: 'TVK', ntk: 'NTK', pmkr: 'PMKR', others: 'Others', independent: 'IND' };
+  return map[id] || 'Others';
+}
+
+function partyIcon(party) {
+  const code = getPartyCode(party);
+
+  // 1. Try dynamic lookup from TN_PARTIES
+  if (typeof TN_PARTIES !== 'undefined') {
+    const found = TN_PARTIES.find(p => p.code === code || p.id === code.toLowerCase());
+    if (found && found.icon) return found.icon;
+  }
+
+  // 2. Legacy fallback map
+  const map = {
+    'DMK': getAssetUrl('assets/party/dmk.svg'), 'INC': getAssetUrl('assets/party/inc.svg'), 'CPI': getAssetUrl('assets/party/cpi.svg'),
+    'CPI(M)': getAssetUrl('assets/party/cpi(m).svg'), 'VCK': getAssetUrl('assets/party/vck.png'), 'IUML': getAssetUrl('assets/party/iuml.svg'),
+    'MDMK': getAssetUrl('assets/party/MDMK.svg'), 'AIADMK': getAssetUrl('assets/party/aiadmk.svg'), 'ADMK': getAssetUrl('assets/party/aiadmk.svg'),
+    'AMMK': getAssetUrl('assets/party/ammk.jpg'), 'PMK': getAssetUrl('assets/party/pmk.svg'), 'BJP': getAssetUrl('assets/party/bjp.svg'),
+    'DMDK': getAssetUrl('assets/party/dmdk.png'), 'TVK': getAssetUrl('assets/party/tvk.jpg'), 'NTK': getAssetUrl('assets/party/ntk.jpg'),
+    'IJK': getAssetUrl('assets/party/ijk.jpg'), 'TMC(M)': getAssetUrl('assets/party/tmc(m).jpg'), 'TMMK': getAssetUrl('assets/party/tmmk.png'),
+    'PB': getAssetUrl('assets/party/pb.png'), 'PMK(R)': getAssetUrl('assets/party/pmk(r).jpg'), 'AIPTMMK': getAssetUrl('assets/party/placeholder.png'),
+    'Others': getAssetUrl('assets/party/independent.png')
+  };
+  return map[code] || getAssetUrl('assets/party/independent.png');
+}
+
+function partyTypeColor(type) {
+  const map = {
+    'National Party': '#6366F1', // Indigo
+    'State Party': '#3B82F6',   // Blue
+    'Recognised': '#F59E0B',    // Amber
+    'Unrecognised': '#6B7280',  // Grey
+    'Independent': '#94A3B8'    // Slate
+  };
+  return map[type] || '#6B7280';
+}
+
+window.ASSEMBLY_VACANCIES = {
+  35: {
+    acId: 35,
+    name: "Vacant",
+    party: "VACANT",
+    originalWinner: "Maragatham Kumaravel.K",
+    originalParty: "ADMK",
+    reason: "On 25 May 2026, Maragatham Resigned her office and officially joined TVK."
+  },
+  101: {
+    acId: 101,
+    name: "Vacant",
+    party: "VACANT",
+    originalWinner: "P. Sathyabama",
+    originalParty: "ADMK",
+    reason: "On 25 May 2026, P. Sathyabama resigned her office and officially joined TVK."
+  },
+  103: {
+    acId: 103,
+    name: "Vacant",
+    party: "VACANT",
+    originalWinner: "S. Jayakumar",
+    originalParty: "ADMK",
+    reason: "On 25 May 2026, S. Jayakumar resigned his office and officially joined TVK."
+  },
+  141: {
+    acId: 141,
+    name: "Vacant",
+    party: "VACANT",
+    originalWinner: "C. Joseph Vijay",
+    originalParty: "TVK",
+    reason: "Resigned by C. Joseph Vijay on 25 May 2026 to retain Perambur (AC #12) constituency."
+  },
+  225: {
+    acId: 225,
+    name: "Vacant",
+    party: "VACANT",
+    originalWinner: "Esakki Subaya",
+    originalParty: "ADMK",
+    reason: "On 26 May 2026, Isakki Subbaya resigned his office and officially joined TVK."
+  },
+  179: {
+    acId: 179,
+    name: "Vacant",
+    party: "VACANT",
+    originalWinner: "C. Vijayabaskar",
+    originalParty: "ADMK",
+    reason: "On 16 June 2026, C. Vijayabaskar resigned his office as MLA from Viralimalai constituency."
+  },
+  135: {
+    acId: 135,
+    name: "Vacant",
+    party: "VACANT",
+    originalWinner: "M. R. Vijayabhaskar",
+    originalParty: "ADMK",
+    reason: "On 29 June 2026, resigned from office. M. R. Vijayabhaskar resigned as MLA."
+  }
+};

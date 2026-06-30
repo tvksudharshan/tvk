@@ -1,0 +1,303 @@
+/**
+ * 2026 TN Elections - FINAL RESULTS
+ * TVK: 108 | SPA-DMK+: 73 | NDA-ADMK+: 53 | Total: 234
+ */
+var RESULTS_2026_DRAFT = {
+    last_updated: "2026-05-05T00:00:00Z",
+    summary: {
+        alliance_results: {
+            "SPA-DMK+": { leads: 0, won: 73 },
+            "NDA-ADMK+": { leads: 0, won: 53 },
+            "TVK": { leads: 0, won: 108 },
+            "NTK": { leads: 0, won: 0 },
+            "MNM": { leads: 0, won: 0 },
+            "OTHERS": { leads: 0, won: 0 },
+            "AMMK": { leads: 0, won: 0 }
+        },
+        party_results: {
+            "TVK": { leads: 0, won: 108, votes: 17226209, vote_percent: 34.92 },
+            "DMK": { leads: 0, won: 59, votes: 11929144, vote_percent: 24.19 },
+            "ADMK": { leads: 0, won: 47, votes: 10462146, vote_percent: 21.21 },
+            "PMK": { leads: 0, won: 4, votes: 1070745, vote_percent: 2.17 },
+            "INC": { leads: 0, won: 5, votes: 1661312, vote_percent: 3.37 },
+            "IUML": { leads: 0, won: 2, votes: 142465, vote_percent: 0.29 },
+            "BJP": { leads: 0, won: 1, votes: 1467024, vote_percent: 2.97 },
+            "VCK": { leads: 0, won: 2, votes: 540056, vote_percent: 1.09 },
+            "CPI": { leads: 0, won: 2, votes: 326488, vote_percent: 0.66 },
+            "CPI(M)": { leads: 0, won: 2, votes: 293817, vote_percent: 0.60 },
+            "DMDK": { leads: 0, won: 1, votes: 589500, vote_percent: 1.20 },
+            "AMMK": { leads: 0, won: 1, votes: 425345, vote_percent: 0.87 },
+            "NTK": { leads: 0, won: 0, votes: 1972537, vote_percent: 4.00 },
+            "NOTA": { leads: 0, won: 0, votes: 199801, vote_percent: 0.41 },
+            "OTHERS": { leads: 0, won: 0, votes: 966709, vote_percent: 2.37 }
+        }
+    },
+    constituency_results: {}
+};
+
+// Initialize all 234 as WAITING
+for (let i = 1; i <= 234; i++) {
+    RESULTS_2026_DRAFT.constituency_results[i] = { party: "—", isWon: false, status: "WAITING", candidate: "—", margin: "—" };
+}
+
+const W = (id, party, candidate, margin) => {
+    RESULTS_2026_DRAFT.constituency_results[id] = { party, isWon: true, status: "WON", candidate, margin };
+};
+
+// ── TVK (108 seats) ──────────────────────────────────────
+W(1, "TVK", "S.VIJAYAKUMAR", 27945);
+W(2, "TVK", "RAVI.M.S", 55768);
+W(4, "TVK", "T. ARUNKUMAR", 24760);
+W(5, "TVK", "PRAKASAM.R", 72740);
+W(6, "TVK", "R.RAMESH KUMAR", 76311);
+W(7, "TVK", "RHEVANTH CHARAN", 61509);
+W(8, "TVK", "BALAMURUGAN.G", 58781);
+W(9, "TVK", "M.L.VIJAYPRABHU", 94985);
+W(10, "TVK", "SENTHIL KUMAR. N", 53564);
+W(11, "TVK", "N. MARIE WILSON", 49668);
+W(12, "TVK", "C. JOSEPH VIJAY", 53715);
+W(13, "TVK", "V.S. BABU", 8795);
+W(14, "TVK", "AADHAV ARJUNA", 17302);
+W(15, "TVK", "M.R. PALLAVI", 22333);
+W(16, "TVK", "RAJMOHAN", 10804);
+W(17, "TVK", "K.V. VIJAY DAMU", 14249);
+W(20, "TVK", "PRABHAKAR.J.C.D", 15141);
+W(21, "TVK", "V.K.RAMKUMAR", 21363);
+W(22, "TVK", "SABARINATHAN.R", 27086);
+W(23, "TVK", "ARUL PRAKASAM. M", 28514);
+W(24, "TVK", "ANAND N", 13027);
+W(25, "TVK", "VENKATARAMANAN. P", 28972);
+W(26, "TVK", "KUMAR. R", 33305);
+W(27, "TVK", "P SARAVANAN", 96780);
+W(28, "TVK", "M.HARISH", 29609);
+W(29, "TVK", "THENNARASU.K", 54246);
+W(30, "TVK", "J.KAMATCHI", 54693);
+W(31, "TVK", "D.SARATHKUMAR", 35621);
+W(32, "TVK", "S. THIYAGARAJAN", 35641);
+W(33, "TVK", "B.VIJAYARAJ", 39351);
+W(36, "TVK", "MUNIRATHINAM.J", 14223);
+W(37, "TVK", "R.V. RANJITHKUMAR", 15488);
+W(38, "TVK", "V. GANDHIRAJ", 23121);
+W(39, "TVK", "G.KAPIL", 5686);
+W(40, "TVK", "MSUDHAKAR", 5870);
+W(41, "TVK", "THAHIRA", 5787);
+W(43, "TVK", "M.M.VINOTH KANNAN", 6777);
+W(45, "TVK", "THENRAL KUMAR. E", 20255);
+W(46, "TVK", "K.SINDU", 10097);
+W(50, "TVK", "THIRUPATHI. N", 48263);
+W(51, "TVK", "N ELAIYARAJA", 5198);
+W(53, "TVK", "MUKUNDHAN.P", 18844);
+W(58, "TVK", "GAJENDRAN. S.", 3165);
+W(66, "TVK", "ABISHEK. R", 227);
+W(80, "TVK", "ARUL VIGNESH C", 798);
+W(88, "TVK", "LAKSHMANAN.S", 74867);
+W(89, "TVK", "SIVAKUMAR. K", 14034);
+W(90, "TVK", "VIJAY TAMILAN PARTHIBAN. A", 33369);
+W(91, "TVK", "PALANIVEL. M.S", 4071);
+W(92, "TVK", "LOGESH TAMILSELVAN D", 14511);
+W(93, "TVK", "P CHANDRASEKAR", 2655);
+W(94, "TVK", "DILIP C S", 11008);
+W(96, "TVK", "ARUNRAJ K G", 28172);
+W(97, "TVK", "C.VIJAYALAKSHMI", 7696);
+W(98, "TVK", "M.VIJAY BALAJI", 23966);
+W(99, "TVK", "ANANTH MOGHAN K.K", 22250);
+W(100, "TVK", "D.SHANMUGAN", 2430);
+W(106, "TVK", "SENGOTTAIYAN.K.A", 16620);
+W(107, "TVK", "V.P.TAMILSELVI", 4569);
+W(111, "TVK", "SUNILANAND", 7768);
+W(112, "TVK", "KAMALI.S", 15373);
+W(113, "TVK", "V.SATHYABAMA", 69992);
+W(114, "TVK", "BALAMURUGAN S", 12901);
+W(115, "TVK", "K.RAMKUMAR", 37897);
+W(116, "TVK", "NM.SUKUMAR", 4790);
+W(117, "TVK", "KANIMOZHI SANTHOSH", 42140);
+W(118, "TVK", "V. SAMPATHKUMAR", 21992);
+W(121, "TVK", "K.S.SRI GIRI PRASATH", 19139);
+W(122, "TVK", "VIGNESH K", 11710);
+W(130, "TVK", "AYYANAR.R", 2925);
+W(136, "TVK", "SATHYA. M", 3503);
+W(138, "TVK", "R. KATHIRAVAN", 1426);
+W(139, "TVK", "RAMESH", 33590);
+W(141, "TVK", "C. JOSEPH VIJAY", 27416);
+W(142, "TVK", "VIJAYAKUMAR S", 8705);
+W(145, "TVK", "M.VIGNESH", 17442);
+W(146, "TVK", "RAVISANKAR.M", 9614);
+W(147, "TVK", "SIVAKUMAR. K", 14393);
+W(155, "TVK", "B.RAJKUMAR", 15519);
+W(171, "TVK", "VINOTH", 679);
+W(174, "TVK", "R. VIJAYSARAVANAN", 16955);
+W(178, "TVK", "N. SUBRAMANIAN", 11039);
+W(183, "TVK", "MOHAMED FARVAS. J", 10062);
+W(184, "TVK", "DR.PRABHU. TK", 46074);
+W(185, "TVK", "SEENIVASA SETHUPATHY. R", 1);
+W(186, "TVK", "KULANTHAI RANI A", 15081);
+W(187, "TVK", "ELANGOVAN.D", 1208);
+W(189, "TVK", "KARTHIKEYAN S", 16547);
+W(190, "TVK", "KARUPPAIAH.M.V", 2678);
+W(191, "TVK", "A.KALLANAI", 18038);
+W(192, "TVK", "M.M.GOPISON", 21529);
+W(193, "TVK", "MADHAR BADHURUDEEN", 19128);
+W(194, "TVK", "THANGAPANDI SR", 11931);
+W(195, "TVK", "NIRMALKUMAR. R.", 41553);
+W(197, "TVK", "VIJAY. M", 1805);
+W(199, "TVK", "SABARI IYNGARAN G.", 19321);
+W(201, "TVK", "JEGANATHMISHRA PLA", 751);
+W(202, "TVK", "JEGADESHWARI. K", 10605);
+W(203, "TVK", "KARTHIK.A", 8581);
+W(205, "TVK", "KEERTHANA S", 11670);
+W(206, "TVK", "SELVAM P", 9391);
+W(210, "TVK", "RAJEEV", 2513);
+W(214, "TVK", "SRINATH", 37731);
+W(216, "TVK", "SARAVANAN. G", 1186);
+W(217, "TVK", "P .MATHANRAJA", 29083);
+W(224, "TVK", "MURUGHAN.R.S.", 11414);
+W(227, "TVK", "REDDIARPATTI V. NARAYANAN", 16419);
+W(228, "TVK", "SATHISH CHRISTOPHER", 12313);
+
+// ── ADMK (47 seats) ──────────────────────────────────────
+W(3, "ADMK", "G.HARI", 5793);
+W(34, "ADMK", "RAJASEKAR. E", 5668);
+W(35, "ADMK", "MARAGATHAM KUMARAVEL.K", 7194);
+W(42, "ADMK", "S.M.SUKUMAR", 42720);
+W(44, "ADMK", "D.VELAZHAGAN", 7081);
+W(49, "ADMK", "VEERAMANI K.C.", 16083);
+W(52, "ADMK", "E.C. GOVINDARASAN", 4241);
+W(55, "ADMK", "BALAKRISHNAREDDY. P", 27803);
+W(57, "ADMK", "ANBALAGAN. K.P.", 39042);
+W(60, "ADMK", "MARAGATHAM VETRIVEL", 33114);
+W(61, "ADMK", "SAMPATHKUMAR. V", 3329);
+W(62, "ADMK", "S.VELU", 13278);
+W(64, "ADMK", "RAMACHANDRAN.S", 30465);
+W(65, "ADMK", "AGRI KRISHNAMURTHY. S S", 26740);
+W(67, "ADMK", "JAYASUDHA. L", 5631);
+W(68, "ADMK", "MUKKUR N. SUBRAMANIAN", 21081);
+W(71, "ADMK", "C VE SHANMUGAM", 30041);
+W(76, "ADMK", "PALANISAMY S", 285);
+W(79, "ADMK", "RAKESH R", 3440);
+W(81, "ADMK", "NALLATHAMBI. A", 14404);
+W(82, "ADMK", "JAYASANKARAN. A.P.", 15318);
+W(83, "ADMK", "USHARANI. P", 2189);
+W(84, "ADMK", "MANI. R", 14539);
+W(85, "ADMK", "VENKATACHALAM. G", 19105);
+W(86, "ADMK", "EDAPPADI PALANISWAMI. K", 98110);
+W(87, "ADMK", "VETRIVEL. S", 9517);
+W(95, "ADMK", "SEKAR S", 308);
+W(101, "ADMK", "SATHYABAMA.P", 16727);
+W(102, "ADMK", "NSN NATARAJ", 8133);
+W(103, "ADMK", "JAYAKUMAR. S", 9693);
+W(104, "ADMK", "KARUPPANAN. K.C", 7396);
+W(105, "ADMK", "HARIBASKAR.P", 1260);
+W(119, "ADMK", "S.P.VELUMANI", 14725);
+W(127, "ADMK", "RAVIMANOHARAN. K", 693);
+W(131, "ADMK", "NATHAM VISWANATHAN R", 11869);
+W(135, "ADMK", "M.R. VIJAYABHASKAR", 1821);
+W(143, "ADMK", "LEEMAROSE MARTIN", 2739);
+W(149, "ADMK", "RAJENDRAN S", 24498);
+W(153, "ADMK", "RAJENDRAN.R", 10962);
+W(154, "ADMK", "MOHAN. K", 10663);
+W(157, "ADMK", "ARUNMOZHITHEVAN . A", 2487);
+W(165, "ADMK", "MANIAN. O.S", 7331);
+W(169, "ADMK", "KAMARAJ. R", 41724);
+W(179, "ADMK", "VIJAYABASKAR. C", 62073);
+W(219, "ADMK", "DHILIPAN JAISHANKAR", 6489);
+W(225, "ADMK", "ESAKKI SUBAYA", 10245);
+W(229, "ADMK", "THALAVAI SUNDARAM. N", 214);
+
+// ── DMK (59 seats) ──────────────────────────────────────
+W(18, "DMK", "P.K SEKARBABU", 11750);
+W(19, "DMK", "UDHAYANIDHI STALIN", 7140);
+W(48, "DMK", "VILWANATHAN. A.C.", 7131);
+W(54, "DMK", "SRINIVASAN.P.S", 138);
+W(63, "DMK", "VELU. E.V", 2455);
+W(69, "DMK", "AMBETHKUMAR. S", 3333);
+W(73, "DMK", "GOWTHAM D", 7034);
+W(74, "DMK", "LAKSHMANAN R", 4119);
+W(77, "DMK", "VASANTHAVEL G R", 2277);
+W(78, "DMK", "KARTHIKEYAN K", 4862);
+W(109, "DMK", "DHRAVIDAMANI.M", 22833);
+W(110, "DMK", "M. RAJU", 8099);
+W(120, "DMK", "V SENTHILBALAJI", 2271);
+W(123, "DMK", "K. NITHYANANDHAN", 4627);
+W(124, "DMK", "SUDHAKAR. A", 9371);
+W(125, "DMK", "JAYAKUMAR M.", 2882);
+W(126, "DMK", "R JAYARAMAKRISHNAN", 15968);
+W(128, "DMK", "SAKKARAPANI. R", 43249);
+W(129, "DMK", "I. PERIASAMY", 22368);
+W(132, "DMK", "SENTHILKUMAR. I.P", 1131);
+W(133, "DMK", "SAMINATHAN. T", 10063);
+W(134, "DMK", "ELANGO. R", 19382);
+W(137, "DMK", "SURIYANUR. A. CHANDRAN", 579);
+W(140, "DMK", "K.N.NEHRU", 4786);
+W(144, "DMK", "KATHIRAVAN. S", 12364);
+W(148, "DMK", "SIVASANKAR. S.S", 15557);
+W(151, "DMK", "GANESAN C.V", 2629);
+W(156, "DMK", "M.R.K.PANNEERSELVAM", 7589);
+W(158, "DMK", "THAMIMUN ANSARI. M", 5747);
+W(160, "DMK", "SENTHILSELVAN.R", 11417);
+W(162, "DMK", "NIVEDHA M MURUGAN", 8260);
+W(163, "DMK", "M.H.JAWAHIRULLAH", 9781);
+W(168, "DMK", "KALAIVANAN POONDI K", 18148);
+W(170, "DMK", "GOVI.CHEZHIAAN", 14116);
+W(173, "DMK", "DURAI. CHANDRASEKARAN", 8555);
+W(175, "DMK", "R. VAITHILINGAM", 35028);
+W(176, "DMK", "ANNADURAI K", 13754);
+W(177, "DMK", "ASHOKKUMAR. N", 3162);
+W(180, "DMK", "V. MUTHURAJA", 1867);
+W(181, "DMK", "REGUPATHY.S", 1492);
+W(182, "DMK", "SIVA.V.MEYYANATHAN", 12977);
+W(196, "DMK", "MANIMARAN.M", 23807);
+W(198, "DMK", "MAHARAJAN.A", 9554);
+W(200, "DMK", "PANNEERSELVAM.O", 6805);
+W(204, "DMK", "KADARKARAIRAJ. A", 5989);
+W(207, "DMK", "RAMACHANDRAN. K.K.S.S.R", 4943);
+W(208, "DMK", "THANGAM THENARASU", 13485);
+W(209, "DMK", "KATHIRAVAN. K.K", 3548);
+W(211, "DMK", "KATHARBATCHA MUTHURAMALINGAM", 12459);
+W(212, "DMK", "R.S.RAJAKANNAPPAN", 16598);
+W(213, "DMK", "MARKANDAYAN G V", 8228);
+W(215, "DMK", "ANITHA R. RADHAKRISHNAN", 5872);
+W(218, "DMK", "KARUNANITHI.K", 843);
+W(220, "DMK", "E. RAJA", 6583);
+W(221, "DMK", "RAJENDRAN. T. M", 6253);
+W(222, "DMK", "KALAI KATHIRAVAN", 10299);
+W(223, "DMK", "PAUL MANOJ PANDIAN", 7798);
+W(226, "DMK", "M.ABDUL WAHAB", 13805);
+W(230, "DMK", "AUSTIN", 7570);
+
+// ── INC (5 seats) ──────────────────────────────────────
+W(161, "INC", "JAMAL MOHAMED YOUNOOS. Y.N", 10845);
+W(188, "INC", "P.VISWANATHAN", 2724);
+W(231, "INC", "THARAHAI CUTHBERT", 2833);
+W(233, "INC", "PRAVEEN T.T", 20970);
+W(234, "INC", "RAJESH KUMAR. S", 1311);
+
+// ── PMK (4 seats) ──────────────────────────────────────
+W(59, "PMK", "SOWMIYA ANBUMANI", 20896);
+W(70, "PMK", "GANESHKUMAR A", 12645);
+W(75, "PMK", "SIVAKUMAR C", 910);
+W(150, "PMK", "VAITHILINGAM G", 18490);
+
+// ── IUML (2 seats) ──────────────────────────────────────
+W(47, "IUML", "SYED FAROOQ BASHA SSB", 2982);
+W(172, "IUML", "A.M. SHAHJAHAN", 1065);
+
+// ── CPI (2 seats) ──────────────────────────────────────
+W(56, "CPI", "RAMACHANDRAN. T", 5240);
+W(166, "CPI", "MARIMUTHU.K", 12922);
+
+// ── VCK (2 seats) ──────────────────────────────────────
+W(72, "VCK", "VANNI ARASU", 734);
+W(159, "VCK", "L.E. JOTHIMANI", 33063);
+
+// ── CPI(M) (2 seats) ──────────────────────────────────────
+W(164, "CPI(M)", "LATHA. T", 2278);
+W(232, "CPI(M)", "CHELLASWAMY. R", 15569);
+
+// ── BJP (1 seat) ──────────────────────────────────────
+W(108, "BJP", "BHOJARAJAN.M", 976);
+
+// ── DMDK (1 seat) ──────────────────────────────────────
+W(152, "DMDK", "PREMALLATHA VIJAYAKANT", 2387);
+
+// ── AMMK (1 seat) ──────────────────────────────────────
+W(167, "AMMK", "KAMARAJ. S", 1566);

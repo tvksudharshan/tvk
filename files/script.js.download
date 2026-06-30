@@ -1,0 +1,3824 @@
+function resolveCandidateImage(can) {
+  if (!can) return 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%%22 y1=%220%%22 x2=%22100%%22 y2=%22100%%22><stop offset=%220%%22 stop-color=%22%231e293b%22/><stop offset=%22100%%22 stop-color=%22%230f172a%22/></linearGradient></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23g)%22/><circle cx=%2250%22 cy=%2238%22 r=%2218%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/><path d=%22M50 60c-18 0-30 8-30 18v8h60v-8c0-10-12-18-30-18z%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/></svg>';
+  
+  if (typeof CANDIDATE_IMAGE_MANIFEST !== 'undefined' && can.id && CANDIDATE_IMAGE_MANIFEST[can.id]) {
+    const path = CANDIDATE_IMAGE_MANIFEST[can.id];
+    return typeof getAssetUrl !== 'undefined' ? getAssetUrl(path) : 'https://pub-b25d504a24b04494839eefe88766f3e8.r2.dev/' + path;
+  }
+  
+  const gender = (can.gender || '').toLowerCase();
+  if (gender.includes('female')) {
+    return 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%%22 y1=%220%%22 x2=%22100%%22 y2=%22100%%22><stop offset=%220%%22 stop-color=%22%231e293b%22/><stop offset=%22100%%22 stop-color=%22%230f172a%22/></linearGradient></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23g)%22/><circle cx=%2250%22 cy=%2238%22 r=%2216%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/><path d=%22M50 58c-15 0-26 8-28 17v11h56v-11c-2-9-13-17-28-17z%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/></svg>';
+  }
+  if (gender.includes('trans') || gender.includes('third') || gender.includes('other')) {
+    return 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%%22 y1=%220%%22 x2=%22100%%22 y2=%22100%%22><stop offset=%220%%22 stop-color=%22%231e293b%22/><stop offset=%22100%%22 stop-color=%22%230f172a%22/></linearGradient></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23g)%22/><circle cx=%2250%22 cy=%2238%22 r=%2217%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/><path d=%22M50 59c-16 0-28 8-29 17v10h58v-10c-1-9-13-17-29-17z%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/></svg>';
+  }
+  return 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%%22 y1=%220%%22 x2=%22100%%22 y2=%22100%%22><stop offset=%220%%22 stop-color=%22%231e293b%22/><stop offset=%22100%%22 stop-color=%22%230f172a%22/></linearGradient></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23g)%22/><circle cx=%2250%22 cy=%2238%22 r=%2218%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/><path d=%22M50 60c-18 0-30 8-30 18v8h60v-8c0-10-12-18-30-18z%22 fill=%22%23cbd5e1%22 opacity=%220.15%22/></svg>';
+}
+
+
+
+
+
+
+
+// Helper: Resolve constituency name from candidate (acNo lookup or legacy .constituency)
+function candConst(cand) {
+  if (cand.constituency) return cand.constituency;
+  if (cand.acNo && typeof TN_CONSTITUENCIES_234 !== 'undefined') {
+    const ac = TN_CONSTITUENCIES_234.find(c => c.id === cand.acNo);
+    if (ac) return ac.name;
+  }
+  return '';
+}
+
+function renderCategoryBadge(cat) {
+  if (!cat) return '';
+  const isGen = cat.toLowerCase() === 'general';
+  const label = isGen ? 'GEN' : cat;
+  const tooltip = isGen ? 'data-tooltip="General (Non-reserved)"' : (cat.toLowerCase() === 'sc' ? 'data-tooltip="Scheduled Caste (Reserved)"' : 'data-tooltip="Scheduled Tribe (Reserved)"');
+  const cls = cat.toLowerCase() === 'sc' ? 'badge-sc' : (cat.toLowerCase() === 'st' ? 'badge-st' : 'badge-gen');
+  return `<span class="badge-cat ${cls}" ${tooltip}>${label}</span>`;
+}
+
+// Helper: Contrast color
+function getContrastColor(color) {
+  if (!color || color === 'transparent') return '#333';
+  if (color.startsWith('var')) return '#333';
+  let hex = color.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000' : '#fff';
+}
+
+function renderGenderVisual(gender) {
+  if (!gender) return '';
+  const g = gender.toLowerCase();
+  if (g.includes('female')) {
+    return `<span class="gender-visual gender-female">♀ Female</span>`;
+  } else if (g.includes('male')) {
+    return `<span class="gender-visual gender-male">♂ Male</span>`;
+  } else if (g.includes('trans') || g.includes('third') || g.includes('other')) {
+    return `<span class="gender-visual gender-other">⚤ Third Gender</span>`;
+  }
+  return gender;
+}
+
+function getGenderStyle(gender) {
+  // Keeping this for compatibility but preferred is CSS class
+  if (!gender) return '';
+  const g = gender.toLowerCase();
+  if (document.documentElement.classList.contains('dark-mode')) {
+    if (g.includes('female')) return 'color: #F06292;';
+    if (g.includes('third') || g.includes('trans') || g.includes('other')) return 'color: #BA68C8;';
+    if (g.includes('male')) return 'color: #64B5F6;';
+  } else {
+    if (g.includes('female')) return 'color: #c2185b;';
+    if (g.includes('third') || g.includes('trans') || g.includes('other')) return 'color: #7b1fa2;';
+    if (g.includes('male')) return 'color: #1565c0;';
+  }
+  return '';
+}
+
+function cleanGender(g) {
+  if (!g) return '';
+  // Strip all non-ASCII characters (emojis, symbols) to keep UI clean
+  return g.replace(/[^\x00-\x7F]/g, '').trim();
+}
+
+'use strict';
+
+// ── Active charts registry (to destroy before re-render) ──
+const activeCharts = {};
+
+function destroyChart(id) {
+  if (activeCharts[id]) { activeCharts[id].destroy(); delete activeCharts[id]; }
+}
+
+function mkChart(id, config) {
+  if (typeof ApexCharts === 'undefined') {
+    console.error("ApexCharts not found. Check CDN link.");
+    return;
+  }
+  destroyChart(id);
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  // Accessibility
+  if (!el.getAttribute('aria-label')) {
+    const card = el.closest('.card, .kpi, .sidebar-panel');
+    const titleEl = card ? card.querySelector('h1, h2, h3, .kpi-label, .sidebar-title') : null;
+    const label = titleEl ? titleEl.textContent.trim() : "Election Chart";
+    el.setAttribute('aria-label', label);
+  }
+  el.setAttribute('role', 'img');
+
+  try {
+
+    // Map Chart.js types to Apex
+    let apexType = config.type === 'doughnut' ? 'donut' : config.type;
+    if (apexType === 'line' && config.options && config.options.fill) apexType = 'area';
+
+    const isDoughnut = apexType === 'donut' || apexType === 'pie';
+    const isBar = apexType === 'bar';
+
+    const isDark = document.documentElement.classList.contains('dark-mode');
+    const chartGrey = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+    const textGrey = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+
+    const options = {
+      chart: {
+        type: apexType,
+        height: '100%',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        background: 'transparent'
+      },
+      theme: {
+        mode: isDark ? 'dark' : 'light'
+      },
+      grid: {
+        borderColor: chartGrey,
+        strokeDashArray: 4,
+        xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: isBar } },
+        padding: { top: 0, right: 0, bottom: 0, left: 10 }
+      },
+      xaxis: {
+        axisBorder: { show: true, color: chartGrey },
+        axisTicks: { show: true, color: chartGrey },
+        labels: { style: { colors: textGrey, fontSize: '11px' } }
+      },
+      yaxis: {
+        axisBorder: { show: true, color: chartGrey },
+        axisTicks: { show: true, color: chartGrey },
+        labels: { style: { colors: textGrey, fontSize: '11px' } }
+      },
+      dataLabels: {
+        enabled: false,
+        formatter: (val, opt) => {
+          if (isDoughnut) {
+            const label = opt.w.globals.labels[opt.seriesIndex];
+            const value = opt.w.globals.series[opt.seriesIndex];
+            return label + ': ' + (typeof value === 'number' ? value.toLocaleString('en-IN') : value);
+          }
+          return typeof val === 'number' && val > 1000 ? fmtLacs(val) : val;
+        },
+        style: { fontSize: '10px', fontWeight: '800' }
+      },
+      tooltip: {
+        theme: isDark ? 'dark' : 'light',
+        y: { formatter: v => typeof v === 'number' ? v.toLocaleString('en-IN') : v }
+      },
+      legend: { show: false },
+      colors: [],
+      series: [],
+      labels: []
+    };
+
+    if (isDoughnut) {
+      options.series = config.data.datasets[0].data;
+      options.labels = config.data.labels;
+      options.colors = config.data.datasets[0].backgroundColor;
+
+      // Handle Gauge/Semi-circle mapping from Chart.js style
+      let startAngle = 0;
+      let endAngle = 360;
+      if (config.options) {
+        if (config.options.chart && config.options.chart.stacked) options.chart.stacked = true;
+        if (config.options.circumference === 180) {
+          if (config.options.rotation === -90) { startAngle = -90; endAngle = 90; }
+          else if (config.options.rotation === 0) { startAngle = 0; endAngle = 180; }
+        }
+      }
+
+      options.plotOptions = {
+        pie: {
+          donut: { size: '70%', background: 'transparent' },
+          startAngle: startAngle,
+          endAngle: endAngle,
+          offsetY: (endAngle - startAngle === 180) ? 20 : 0
+        }
+      };
+
+      options.grid = { padding: { bottom: (endAngle - startAngle === 180) ? -60 : 0 } };
+      options.dataLabels.dropShadow = { enabled: false };
+      options.stroke = { show: true, width: 1.5, colors: ['var(--surface)'] };
+    } else if (isBar) {
+      options.series = config.data.datasets.map(ds => ({
+        name: ds.label || 'Count',
+        data: ds.data
+      }));
+      options.xaxis = { categories: config.data.labels };
+
+      // Map colors
+      const ds0 = config.data.datasets[0];
+      if (Array.isArray(ds0.backgroundColor)) {
+        options.colors = ds0.backgroundColor;
+        options.plotOptions = { bar: { distributed: true } };
+      } else {
+        options.colors = config.data.datasets.map(ds => ds.backgroundColor);
+      }
+
+      if (config.options && config.options.indexAxis === 'y') {
+        if (!options.plotOptions) options.plotOptions = {};
+        if (!options.plotOptions.bar) options.plotOptions.bar = {};
+        options.plotOptions.bar.horizontal = true;
+      }
+    } // Close isBar block
+
+    if (config.options) {
+      if (config.options.plotOptions) {
+        options.plotOptions = { ...options.plotOptions, ...config.options.plotOptions };
+      }
+      if (config.options.dataLabels) {
+        options.dataLabels = { ...options.dataLabels, ...config.options.dataLabels };
+      }
+      if (config.options.layout) options.layout = config.options.layout;
+      if (config.options.grid) options.grid = config.options.grid;
+      if (config.options.legend) options.legend = { ...options.legend, ...config.options.legend };
+      // Also check plugins.legend (Chart.js style)
+      if (config.options.plugins && config.options.plugins.legend) {
+        const cl = config.options.plugins.legend;
+        options.legend = { show: cl.display !== false, position: cl.position || 'bottom' };
+      }
+    }
+    const chart = new ApexCharts(el, options);
+    chart.render();
+    activeCharts[id] = chart;
+    return chart;
+  } catch (err) {
+    console.error("Error creating chart", id, err);
+  }
+}
+
+// ── Shared Chart Utils ──────────────────────────────────
+// (datalabels handled inside mkChart mapping for Apex)
+
+// ── Navigation ──────────────────────────────────────────
+const pages = document.querySelectorAll('.page');
+const navItems = document.querySelectorAll('.nav-item');
+const pageTitles = {
+  'home': 'Dashboard Overview',
+  'alliances': 'Alliances',
+  'manifesto': 'Manifesto Comparison',
+  'candidates': 'Candidates Explorer',
+  'parties': 'Political Parties',
+  'party': 'Party Details',
+  'constituencies': 'Constituency Explorer',
+  'elector-stats': 'Elector Statistics',
+  'results': 'Election Results',
+  'about': 'About'
+};
+
+function slugifyConstituencyName(name) {
+  if (!name) return '';
+  const n = String(name).toLowerCase().trim();
+  
+  // Special mappings for common election symbols and edge cases
+  if (n === 'two leaves' || n === 'two_leaves' || n === 'two-leaves') return 'twoleaves';
+  if (n === 'lotus' || n === 'lotus flower') return 'lotus_flower';
+  if (n === 'farmer carrying plough' || n === 'farmer-carrying-plough') return 'farmer';
+  if (n === 'rising sun' || n === 'rising-sun') return 'rising_sun';
+  if (n === 'conch' || n === 'conch-shell') return 'conch';
+  if (n === 'hand') return 'hand';
+
+  // Generic slugification for everything else
+  return n.normalize('NFKD')
+    .replace(/[^\x00-\x7F]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+window.navigate = function (pageId) {
+  if (pageId === 'home') {
+    window.location.href = 'index.html';
+  } else {
+    window.location.href = pageId + '.html';
+  }
+};
+
+function getConstituencyBySlug(slug) {
+  if (!slug || !TN_DATA || !TN_DATA.constituencies) return null;
+  return TN_DATA.constituencies.find(c => slugifyConstituencyName(c.name) === String(slug).toLowerCase()) || null;
+}
+
+function getConstituencyPath(ref) {
+  const constituency = typeof ref === 'object'
+    ? ref
+    : TN_DATA.constituencies.find(c => c.id == ref || c.name === ref) || getConstituencyBySlug(ref);
+  if (!constituency) return 'constituencies.html';
+  return `constituency.html?name=${encodeURIComponent(slugifyConstituencyName(constituency.name))}`;
+}
+
+function isConstituencyDetailPage() {
+  const p = window.location.pathname.replace(/\/+$/, '');
+  return p.endsWith('/constituency.html') || p.endsWith('/constituency') || p === 'constituency.html' || p === 'constituency';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Dynamic Election Phase Logic
+  const getElectionPhase = (now = new Date()) => {
+    // Phase dates (2026)
+    const dates = {
+      notification: new Date('2026-03-30T00:00:00+05:30'),
+      nominationsClose: new Date('2026-04-06T18:00:00+05:30'),
+      withdrawalClose: new Date('2026-04-09T18:00:00+05:30'),
+      silentPeriod: new Date('2026-04-21T18:00:00+05:30'),
+      pollingStart: new Date('2026-04-23T00:00:00+05:30'),
+      pollingEnd: new Date('2026-04-23T19:00:00+05:30'),
+      counting: new Date('2026-05-04T08:00:00+05:30'),
+    };
+
+    if (now < dates.notification) return { text: 'Pre-Election Phase', bg: '#F5F5F5', border: '#E0E0E0', color: '#616161' };
+    if (now < dates.nominationsClose) return { text: 'Nomination Phase', bg: '#FFF3E0', border: '#FFB74D', color: '#E65100' };
+    if (now < dates.withdrawalClose) return { text: 'Nomination Withdrawal', bg: '#FFFDE7', border: '#FFF176', color: '#F57F17' };
+    if (now < dates.silentPeriod) return { text: 'Campaigning Phase', bg: '#E8F5E9', border: '#81C784', color: '#2E7D32' };
+    if (now < dates.pollingStart) return { text: 'Silent Period', bg: '#ECEFF1', border: '#CFD8DC', color: '#455A64' };
+    if (now < dates.pollingEnd) return { text: 'Polling Day', bg: '#F3E5F5', border: '#BA68C8', color: '#7B1FA2' };
+    if (now < dates.counting) return { text: 'Counting Day', bg: '#FFEBEE', border: '#E57373', color: '#C62828' };
+    if (now < new Date('2026-05-05T00:00:00+05:30')) return { text: 'Counting Day', bg: '#FFEBEE', border: '#E57373', color: '#C62828' };
+    return { text: 'Results Declared', bg: '#E1F5FE', border: '#4FC3F7', color: '#01579B' };
+  };
+
+  const electionBadge = document.querySelector('.election-badge');
+  if (electionBadge) {
+    const phase = getElectionPhase();
+    electionBadge.innerHTML = phase.text;
+    electionBadge.style.background = phase.bg;
+    electionBadge.style.borderColor = phase.border;
+    electionBadge.style.color = phase.color;
+  }
+
+  // Dynamically Sync KPI Cards
+  const kpis = document.querySelectorAll('.kpi');
+  kpis.forEach(kpi => {
+    const lbl = kpi.querySelector('.kpi-label')?.textContent;
+    const val = kpi.querySelector('.kpi-value');
+    if (lbl === 'Candidates' && val) val.textContent = fmtNum(TN_DATA.summary.totalCandidates);
+    if (lbl === 'Parties' && val) val.textContent = fmtNum(TN_DATA.summary.totalParties);
+    if (lbl === 'Electors' || lbl === 'Total Electors') {
+      if (val) val.textContent = fmtLacs(TN_DATA.electorStats.total);
+      const sub = kpi.querySelector('.kpi-sub');
+      if (sub && (lbl === 'Total Electors' || lbl === 'Electors')) sub.textContent = fmtNum(TN_DATA.electorStats.total) + ' registered';
+    }
+    if (lbl === 'Male Electors' && val) {
+      val.textContent = fmtLacs(TN_DATA.electorStats.male);
+      const sub = kpi.querySelector('.kpi-sub');
+      if (sub) sub.textContent = ((TN_DATA.electorStats.male / TN_DATA.electorStats.total) * 100).toFixed(1) + '% of total';
+    }
+    if (lbl === 'Female Electors' && val) {
+      val.textContent = fmtLacs(TN_DATA.electorStats.female);
+      const sub = kpi.querySelector('.kpi-sub');
+      if (sub) sub.textContent = ((TN_DATA.electorStats.female / TN_DATA.electorStats.total) * 100).toFixed(1) + '% of total';
+    }
+    if (lbl === 'New Voters' && val) {
+      val.textContent = fmtLacs(TN_DATA.electorStats.newVoters);
+      const sub = kpi.querySelector('.kpi-sub');
+      if (sub) sub.textContent = 'First-time voters 2026';
+    }
+    if (lbl.startsWith('Youth') && val) {
+      val.textContent = fmtLacs(TN_DATA.electorStats.youngVoters);
+      const sub = kpi.querySelector('.kpi-sub');
+      if (sub) sub.textContent = ((TN_DATA.electorStats.youngVoters / TN_DATA.electorStats.total) * 100).toFixed(1) + '% of electorate';
+    }
+    if (lbl === 'Women Candidates' && val) {
+      val.textContent = fmtNum(TN_DATA.summary.womenCandidates);
+      const sub = kpi.querySelector('.kpi-sub');
+      if (sub) sub.textContent = TN_DATA.summary.womenPercent + '% of total';
+    }
+  });
+
+  // Dynamically Sync Candidates Explorer Header
+  const candPagePara = document.querySelector('#page-candidates .page-header p');
+  if (candPagePara) {
+    const count = fmtNum(TN_DATA.summary.totalCandidates);
+    candPagePara.textContent = `Search and filter ${count} candidates across all parties and constituencies.`;
+  }
+
+  // Setup Results Countdown
+  const resultDate = new Date('2026-05-04T08:00:00+05:30'); // 8 AM IST on Result Day
+  const updateCountdown = () => {
+    const now = new Date();
+    const diff = resultDate - now;
+
+    // Update the live header timer if present
+    const liveTimeTextHeader = document.getElementById('liveTimeTextHeader');
+    if (liveTimeTextHeader) {
+      if (diff <= 0) {
+        liveTimeTextHeader.textContent = '00:00:00';
+      } else {
+        const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+        const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+        const totalH = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+        liveTimeTextHeader.textContent = `${totalH}:${m}:${s}`;
+      }
+    }
+  };
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+
+
+  // Close sidebar on overlay click
+  const constSidebar = document.getElementById('constSidebar');
+  if (constSidebar) {
+    constSidebar.addEventListener('click', (e) => {
+      if (e.target === constSidebar) closeSidebar();
+    });
+  }
+
+  // Auto-scroll active secondary-nav item into view (for mobile horizontal scroll)
+  const activeNavItem = document.querySelector('.secondary-nav .nav-item.active');
+  if (activeNavItem) {
+    const container = activeNavItem.closest('.secondary-nav');
+    if (container) {
+      const scrollPos = activeNavItem.offsetLeft - (container.offsetWidth / 2) + (activeNavItem.offsetWidth / 2);
+      container.scrollTo({ left: scrollPos, behavior: 'smooth' });
+    }
+  }
+
+
+  // Theme Toggle Logic
+  const themeToggle = document.getElementById('themeToggle');
+
+  const toggleTheme = () => {
+    const isDark = document.documentElement.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+    // Update all active charts
+    Object.values(activeCharts).forEach(chart => {
+      chart.updateOptions({
+        theme: { mode: isDark ? 'dark' : 'light' }
+      });
+    });
+
+    window.syncDatawrapperTheme();
+  };
+
+  window.syncDatawrapperTheme = () => {
+    const isDark = document.documentElement.classList.contains('dark-mode') || document.body.classList.contains('dark-mode');
+    const theme = isDark ? 'dark' : 'light';
+    document.querySelectorAll('iframe').forEach(iframe => {
+      if (iframe.src.includes('datawrapper.dwcdn.net') || (iframe.id && iframe.id.startsWith('datawrapper-vis-'))) {
+        const send = () => {
+          iframe.contentWindow.postMessage({ "datawrapper-theme": theme }, "*");
+        };
+        setTimeout(send, 50);
+        setTimeout(send, 500);
+      }
+    });
+  };
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+
+  // Handle system theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('theme')) {
+      if (e.matches) document.documentElement.classList.add('dark-mode');
+      else document.documentElement.classList.remove('dark-mode');
+      window.syncDatawrapperTheme();
+    }
+  });
+});
+
+
+
+// ── Utility ─────────────────────────────────────────────
+// Helper: Clean data display
+function safeVal(val) {
+  if (!val || val === '#' || typeof val === 'object' || String(val).trim() === '') return '-';
+  return val;
+}
+
+function fmtNum(n) { return n ? n.toLocaleString('en-IN') : '0'; }
+function fmtName(name) {
+  if (!name || name === '—') return name;
+  // Handle initials and multiple parts
+  return name.split(' ').map(part => {
+    if (part.includes('.')) {
+      // Handle "M.K." -> "M.K."
+      return part.split('.').map(sub => sub.charAt(0).toUpperCase() + sub.slice(1).toLowerCase()).join('.');
+    }
+    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+  }).join(' ');
+}
+function fmtLacs(n) {
+  if (!n) return '0 L';
+  if (n >= 10000000) return (n / 10000000).toFixed(2) + ' Cr';
+  if (n >= 100000) return (n / 100000).toFixed(2) + ' L';
+  return n.toLocaleString('en-IN');
+}
+
+
+
+
+function allianceName(id, preferShort = false) {
+  const a = TN_DATA.alliances.find(x => x.id == id);
+  if (!a) return id;
+  return (preferShort && a.short) ? a.short : a.name;
+}
+
+// ── Render dispatch ─────────────────────────────────────
+function renderPage(id) {
+  switch (id) {
+    case 'home': renderHome(); break;
+    case 'alliances': renderAlliances(); break;
+    case 'manifesto': renderManifesto(); break;
+    case 'mlas': renderMLAs(); break;
+    case 'parties': renderParties(); break;
+    case 'party': renderPartyDetail(); break;
+    case 'constituencies': renderConstituencies(); break;
+    case 'elector-stats': renderElectorStats(); break;
+    case 'districts': if (window.renderDistricts) window.renderDistricts(); break;
+    case 'results': renderResults(); break;
+  }
+}
+
+/* ── Political Parties Rendering ───────────────── */
+function renderParties(searchQuery = '') {
+  const container = document.getElementById('partyGrid');
+  if (!container) return;
+
+  const query = searchQuery.toLowerCase().trim();
+
+  // 1. Get all unique parties from candidate data
+  const candidateParties = new Set();
+  (TN_DATA.candidates || []).forEach(c => {
+    const code = getPartyCode(c.party);
+    if (code && code !== 'IND') candidateParties.add(code.toUpperCase());
+  });
+
+  // 2. Build the list of party objects
+  let allParties = [];
+
+  // Start with curated parties
+  (TN_DATA.parties || []).forEach(p => {
+    if (p.id !== 'oth' && p.id !== 'others' && p.type !== 'Independent' && p.code !== 'IND') {
+      allParties.push(p);
+      if (p.code) candidateParties.delete(p.code.toUpperCase());
+      if (p.id) candidateParties.delete(p.id.toUpperCase());
+    }
+  });
+
+  // Add missing parties from candidate data
+  candidateParties.forEach(code => {
+    const name = (typeof TN_PARTY_LOOKUP !== 'undefined' && TN_PARTY_LOOKUP[code]) ? TN_PARTY_LOOKUP[code] : code;
+    const seats = (TN_DATA.candidates || []).filter(c => getPartyCode(c.party).toUpperCase() === code).length;
+
+    allParties.push({
+      id: code.toLowerCase(),
+      code: code,
+      name: name,
+      leader: '—',
+      icon: getAssetUrl('assets/party/placeholder.png'),
+      seatsContested: seats,
+      color: '#757575',
+      type: 'Unrecognised'
+    });
+  });
+
+  // Update KPI Counts (Total before filtering by search)
+  const nCnt = allParties.filter(p => p.type === 'National Party').length;
+  const sCnt = allParties.filter(p => p.type === 'State Party' || p.type === 'State Party - Other').length;
+  const rCnt = allParties.filter(p => p.type === 'Unrecognised' || p.type === 'Unrecognized' || p.type === 'Registered Party').length;
+
+  const nEl = document.getElementById('countNational');
+  const sEl = document.getElementById('countState');
+  const rEl = document.getElementById('countRegistered');
+  if (nEl) nEl.textContent = nCnt;
+  if (sEl) sEl.textContent = sCnt;
+  if (rEl) rEl.textContent = rCnt;
+
+  // 3. Filter by search query
+  const filteredParties = allParties.filter(p => {
+    return p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query);
+  });
+
+  if (filteredParties.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">
+      <div class="empty-state-icon">🔍</div>
+      <h3>No Matches Found</h3>
+      <p>Could not find any parties matching "${searchQuery}".</p>
+    </div>`;
+    return;
+  }
+
+  // 4. Group by type and sort alphabetically
+  const groupOrder = [
+    { label: 'National Parties', types: ['National Party'] },
+    { label: 'State Parties (Tamil Nadu)', types: ['State Party'] },
+    { label: 'State Parties (Other States)', types: ['State Party - Other'] },
+    { label: 'Unrecognized Registered Parties', types: ['Unrecognised', 'Unrecognized', 'Registered Party'] }
+  ];
+
+  const grouped = groupOrder.map(g => ({
+    label: g.label,
+    parties: filteredParties.filter(p => g.types.includes(p.type || 'Unrecognised')).sort((a, b) => a.name.localeCompare(b.name))
+  })).filter(g => g.parties.length > 0);
+
+  container.style.display = 'block';
+  container.innerHTML = grouped.map((g, idx) => `
+    <div class="party-group-section animate-in" style="margin-bottom: 3.5rem; animation-delay: ${idx * 0.1}s;">
+      <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+        <h3 class="group-title" style="margin: 0; font-size: 1.25rem; font-weight: 800;">${g.label}</h3>
+        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-3); background: var(--surface-alt); padding: 2px 10px; border-radius: 20px;">${g.parties.length}</span>
+      </div>
+      <div class="party-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.5rem;">
+        ${g.parties.map(p => `
+          <div class="party-card clickable" 
+               style="--party-color: ${p.color || '#607D8B'}"
+               onclick="window.location.href='party.html?id=${p.id || p.code.toLowerCase()}'">
+            <div class="party-card-content">
+              <div class="party-card-top">
+                <div class="logo-wrapper">
+                  <img src="${p.icon || getAssetUrl('assets/party/placeholder.png')}" 
+                    onerror="this.src='${getAssetUrl('assets/party/placeholder.png')}'; this.onerror=null;"
+                    alt="${p.name}" class="party-logo-v3">
+                </div>
+                <div class="party-ident">
+                  <span class="p-code">${p.code}</span>
+                  <h3>${p.name}</h3>
+                </div>
+              </div>
+              <div class="party-card-bottom">
+                <div class="p-stat-v3">
+                  <span class="p-label">State Leader</span>
+                  <span class="p-value">${p.leader || '—'}</span>
+                </div>
+                <div class="p-stat-v3">
+                  <span class="p-label">Contested</span>
+                  <span class="p-value">${p.seatsContested || 0} ${p.seatsContested === 1 ? 'Seat' : 'Seats'}</span>
+                </div>
+                ${(() => {
+                  const pr = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.summary && RESULTS_2026_DRAFT.summary.party_results) ? RESULTS_2026_DRAFT.summary.party_results[p.code.toUpperCase()] || RESULTS_2026_DRAFT.summary.party_results[p.id.toUpperCase()] : null;
+                  if (pr && pr.votes) {
+                    return `
+                      <span class="p-label">Votes Share</span>
+                      <span class="p-value" style="font-weight: 800; color: var(--accent);">${pr.vote_percent}% (${pr.votes.toLocaleString('en-IN')})</span>
+                    </div>`;
+                  }
+                  return '';
+                })()}
+              </div>
+            </div>
+            <div class="party-card-arrow">
+              <span class="iconify" data-icon="carbon:arrow-right"></span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPartyDetail(partyId, searchQuery = '') {
+  if (!partyId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    partyId = urlParams.get('id');
+  }
+
+  let party = (TN_DATA.parties || []).find(p => p.id === partyId) ||
+    (TN_DATA.parties || []).find(p => p.code.toLowerCase() === partyId.toLowerCase());
+
+  if (!party && typeof TN_PARTY_LOOKUP !== 'undefined' && TN_PARTY_LOOKUP[partyId.toUpperCase()]) {
+    const code = partyId.toUpperCase();
+    party = {
+      id: partyId.toLowerCase(),
+      code: code,
+      name: TN_PARTY_LOOKUP[code],
+      color: '#607D8B',
+      type: 'Unrecognised Registered Party',
+      leader: '—'
+    };
+  }
+
+  const container = document.getElementById('partyDetailContainer');
+  if (!container) return;
+
+  if (!party) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><h3>Party Not Found</h3><p>The party with ID "' + partyId + '" could not be found.</p><a href="parties.html" class="nav-item active">Back to All Parties</a></div>';
+    return;
+  }
+
+  const query = searchQuery.toLowerCase().trim();
+
+  // Filter candidates by party and search query
+  const allCandidates = (TN_DATA.candidates || []).filter(c => {
+    if (!c.party) return false;
+
+    const pCode = getPartyCode(c.party).toUpperCase();
+    const pName = getPartyName(c.party).toUpperCase();
+    const targetCode = (party.code || '').toUpperCase();
+    const targetId = (party.id || '').toUpperCase();
+    const targetName = (party.name || '').toUpperCase();
+    const rawParty = c.party.toString().toUpperCase();
+
+    return pCode === targetCode ||
+      pCode === targetId ||
+      pName === targetName ||
+      rawParty === targetCode ||
+      rawParty === targetName;
+  });
+
+  const filteredCandidates = allCandidates.filter(c => {
+    if (!query) return true;
+    return c.name.toLowerCase().includes(query) ||
+      candConst(c).toLowerCase().includes(query) ||
+      (c.education || '').toLowerCase().includes(query);
+  }).sort((a, b) => a.acNo - b.acNo);
+
+  const renderGenderBadge = (g) => {
+    if (g === 'Female') return `<span class="gender-badge-v2 female"><span class="iconify" data-icon="carbon:gender-female"></span> Female</span>`;
+    return `<span class="gender-badge-v2 male"><span class="iconify" data-icon="carbon:gender-male"></span> Male</span>`;
+  };
+
+  container.innerHTML = `
+    <!-- Header Section -->
+    <div class="party-detail-header-v2" style="background: linear-gradient(165deg, var(--surface) 60%, color-mix(in srgb, ${party.color}, transparent 95%) 100%); border: 1px solid color-mix(in srgb, ${party.color}, transparent 70%);">
+      <div class="party-detail-main-v2">
+        <img src="${party.icon || getAssetUrl('assets/party/placeholder.png')}" 
+          onerror="this.src='${getAssetUrl('assets/party/placeholder.png')}'; this.onerror=null;"
+          alt="${party.name}" class="party-logo-v2">
+        <div class="party-meta-v2">
+          <span class="party-tag-v2">${party.type || 'Political Party'}</span>
+          <h1 class="party-name-v2">${party.name} (${party.code})</h1>
+          <p class="party-leader-v2">Leader (State): <span class="leader-name-v2">${party.leader || '—'}</span></p>
+        </div>
+      </div>
+      <div class="party-stats-v2">
+        <div class="stat-box-v2">
+          <span class="stat-val-v2">${allCandidates.length}</span>
+          <span class="stat-label-v2">Candidates</span>
+        </div>
+        <div class="stat-box-v2">
+          <div class="stat-val-v2 symbol-img">
+            <img src="${(allCandidates[0]?.symbol) ? getAssetUrl(`assets/symbols/${slugifyConstituencyName(allCandidates[0].symbol)}.png`) : (party.icon || getAssetUrl('assets/party/placeholder.png'))}" 
+                 onerror="this.src='${party.icon || getAssetUrl('assets/party/placeholder.png')}'; this.onerror=null;"
+                 alt="Symbol">
+          </div>
+          <span class="stat-label-v2">Symbol</span>
+        </div>
+        <div class="stat-box-v2">
+          <span class="stat-val-v2" style="font-size: 1.5rem; color: ${party.alliance ? (TN_DATA.alliances.find(a => a.id === party.alliance)?.color || 'var(--text)') : 'var(--text-3)'}">${party.alliance ? allianceName(party.alliance, true) : 'None'}</span>
+          <span class="stat-label-v2">Alliance</span>
+        </div>
+        ${(() => {
+          const pr = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.summary && RESULTS_2026_DRAFT.summary.party_results) ? RESULTS_2026_DRAFT.summary.party_results[party.code.toUpperCase()] || RESULTS_2026_DRAFT.summary.party_results[party.id.toUpperCase()] : null;
+          if (pr && pr.votes) {
+            return `
+            <div class="stat-box-v2">
+              <span class="stat-val-v2">${pr.vote_percent}%</span>
+              <span class="stat-label-v2">Vote Share</span>
+            </div>
+            <div class="stat-box-v2">
+              <span class="stat-val-v2" style="font-size: 1.1rem;">${pr.votes.toLocaleString('en-IN')}</span>
+              <span class="stat-label-v2">Total Votes</span>
+            </div>`;
+          }
+          return '';
+        })()}
+      </div>
+    </div>
+
+    <!-- Candidates List -->
+    <div class="cand-list-card-v2">
+      <div class="cand-list-header-v2">
+        <h2 class="cand-list-title-v2">Candidates List (${allCandidates.length})</h2>
+        <a href="parties.html" class="back-link-v2">← Back to Parties</a>
+      </div>
+      
+      <div class="search-container-v2">
+        <input type="text" class="search-input-v2" id="candListSearch" 
+          placeholder="Search candidates by name, constituency or qualification..."
+          value="${searchQuery}"
+          oninput="renderPartyDetail('${partyId}', this.value)">
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="data-table-v2">
+          <thead>
+            <tr>
+              <th style="width: 80px;">S.No</th>
+              <th>Name</th>
+              <th>Constituency / Area</th>
+              <th>Symbol</th>
+              <th>Qualification</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredCandidates.length > 0 ? filteredCandidates.map((c, idx) => `
+              <tr>
+                <td style="font-weight: 600; color: var(--text-3);">${idx + 1}</td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <a href="javascript:void(0)" class="clickable" data-trigger="openCandModal" data-id="${c.id}" style="color: var(--accent-2); font-weight: 700; text-decoration: none;">${c.name}</a>
+                    ${renderGenderBadge(c.gender)}
+                  </div>
+                </td>
+                <td><span style="color: var(--text-2); font-weight: 700;">${candConst(c)}</span></td>
+                <td>
+                  <div class="cd-symbol-box" style="width:34px; height:34px;" title="Symbol: ${c.symbol}">
+                    <img src="${getAssetUrl(`assets/symbols/${slugifyConstituencyName(c.symbol)}.png`)}" 
+                         onerror="this.src='${party.icon || getAssetUrl('assets/party/placeholder.png')}'; this.onerror=null;"
+                         alt="${c.symbol}">
+                  </div>
+                </td>
+                <td style="font-weight: 500;">${c.education || 'Not Specified'}</td>
+              </tr>
+            `).join('') : `
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-3);">
+                  No candidates found matching "${searchQuery}"
+                </td>
+              </tr>
+            `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // Focus the search input if it was active
+  if (searchQuery) {
+    const input = document.getElementById('candListSearch');
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// HOME PAGE
+// ══════════════════════════════════════════════════════
+function renderCandidateAnalyticsCharts() {
+  if (!TN_DATA.candidates || TN_DATA.candidates.length === 0) return;
+
+  // 1. Candidate Gender Ratio Chart
+  const genderEl = document.getElementById('homeCandGenderChart');
+  if (genderEl) {
+    const list = TN_DATA.candidates;
+    const m = list.filter(c => c.gender === 'Male').length;
+    const f = list.filter(c => c.gender === 'Female').length;
+    const t = list.filter(c => c.gender === 'Third' || c.gender === 'Transgender' || c.gender === 'Others').length;
+    const total = m + f + t;
+
+    mkChart('homeCandGenderChart', {
+      type: 'doughnut',
+      data: {
+        labels: ['Male', 'Female', 'Third Gender'],
+        datasets: [{
+          data: [m, f, t],
+          backgroundColor: ['#1565C0', '#C2185B', '#6A1B9A']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            formatter: (label, opt) => {
+              const v = opt.w.globals.series[opt.seriesIndex];
+              return label + ': ' + (typeof v === 'number' ? v.toLocaleString('en-IN') : v);
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: c => ` ${c.label}: ${fmtNum(c.parsed)} (${((c.parsed / total) * 100).toFixed(1)}%)`
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Gender by Alliance Chart (Unified Ratio View)
+  const genAllEl = document.getElementById('homeGenderAllianceChart');
+  if (genAllEl && TN_DATA.alliances) {
+    const alliances = TN_DATA.alliances.filter(a => a.id !== 'independent' && a.id !== 'others');
+    const maleData = alliances.map(a => TN_DATA.candidates.filter(c => c.alliance === a.id && c.gender === 'Male').length);
+    const femaleData = alliances.map(a => TN_DATA.candidates.filter(c => c.alliance === a.id && c.gender === 'Female').length);
+    const otherData = alliances.map(a => TN_DATA.candidates.filter(c => c.alliance === a.id && !['Male', 'Female'].includes(c.gender)).length);
+
+    const labels = alliances.map(a => {
+      if (a.id === 'spa') return 'SPA (DMK+)';
+      if (a.id === 'nda') return 'NDA (ADMK+)';
+      return a.short || a.name;
+    });
+
+    mkChart('homeGenderAllianceChart', {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Male', data: maleData, backgroundColor: '#6366f1' },
+          { label: 'Female', data: femaleData, backgroundColor: '#ec4899' },
+          { label: 'Third Gender', data: otherData, backgroundColor: '#10b981' }
+        ]
+      },
+      options: {
+        chart: {
+          stacked: true,
+          stackType: '100%',
+          toolbar: { show: false },
+          height: 280
+        },
+        indexAxis: 'y',
+        dataLabels: {
+          enabled: true,
+          formatter: (val, opt) => {
+            const count = opt.w.globals.series[opt.seriesIndex][opt.dataIndex];
+            return count > 0 ? count : '';
+          },
+          style: { fontSize: '10px', fontWeight: '800' }
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true,
+            barHeight: '70%',
+            borderRadius: 4
+          }
+        },
+        xaxis: {
+          labels: { show: false },
+          axisBorder: { show: false },
+          axisTicks: { show: false }
+        },
+        yaxis: {
+          labels: {
+            style: { fontWeight: 700, fontSize: '12px' }
+          }
+        },
+        tooltip: {
+          y: {
+            formatter: (val, { seriesIndex, dataIndex }) => {
+              const total = maleData[dataIndex] + femaleData[dataIndex] + otherData[dataIndex];
+              const count = TN_DATA.candidates.filter(c => c.alliance === alliances[dataIndex].id && (
+                seriesIndex === 0 ? c.gender === 'Male' : (seriesIndex === 1 ? c.gender === 'Female' : !['Male', 'Female'].includes(c.gender))
+              )).length;
+              const pct = ((count / total) * 100).toFixed(1);
+              return `${count} candidates (${pct}%)`;
+            }
+          }
+        },
+        plugins: {
+          legend: { display: true, position: 'bottom' }
+        }
+      }
+    });
+  }
+
+  // 3. Candidate Age Chart
+  const ageEl = document.getElementById('homeAgeChart');
+  if (ageEl) {
+    const buckets = { '<30': 0, '30–39': 0, '40–49': 0, '50–59': 0, '60–69': 0, '70+': 0 };
+    TN_DATA.candidates.forEach(c => {
+      const a = parseInt(c.age);
+      if (!a) return;
+      if (a < 30) buckets['<30']++;
+      else if (a < 40) buckets['30–39']++;
+      else if (a < 50) buckets['40–49']++;
+      else if (a < 60) buckets['50–59']++;
+      else if (a < 70) buckets['60–69']++;
+      else buckets['70+']++;
+    });
+
+    mkChart('homeAgeChart', {
+      type: 'bar',
+      data: {
+        labels: Object.keys(buckets),
+        datasets: [{
+          label: 'Candidates',
+          data: Object.values(buckets),
+          backgroundColor: '#FF9800'
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { grid: { display: false }, ticks: { display: false } },
+          y: { grid: { display: false } }
+        },
+        dataLabels: {
+          enabled: true,
+          formatter: (val) => val.toLocaleString('en-IN'),
+          style: { fontSize: '10px' }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// HOME PAGE
+// ══════════════════════════════════════════════════════
+function renderHome() {
+  window.renderLiveResultsBanner();
+
+  // Alliance dropdown options
+  const homeAllSel = document.getElementById('homeAllianceSelect');
+  if (homeAllSel && homeAllSel.options.length <= 1) {
+    homeAllSel.innerHTML = TN_DATA.alliances.filter(a => a.id !== 'independent').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    homeAllSel.value = 'spa';
+  }
+
+  // Always show 2026 pre-poll section
+  const prePollSection = document.getElementById('homePrePollSection');
+  if (prePollSection) prePollSection.style.display = 'grid';
+
+  // Update Dynamic KPIs
+
+
+  // Candidate Analytics Charts
+  renderCandidateAnalyticsCharts();
+
+
+
+
+
+  // Elector Gender Chart
+  const es = TN_DATA.electorStats;
+  if (es) {
+    const total = es.male + es.female + es.thirdGender;
+    mkChart('homeElectorGenderChart', {
+      type: 'pie',
+      data: {
+        labels: ['Male', 'Female', 'Third Gender'],
+        datasets: [{
+          data: [es.male, es.female, es.thirdGender],
+          backgroundColor: ['#1565C0', '#C2185B', '#6A1B9A'],
+          borderWidth: 1.5,
+          borderColor: 'var(--surface)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        dataLabels: {
+          enabled: true,
+          formatter: (val, opt) => {
+            const v = opt.w.globals.series[opt.seriesIndex];
+            // Short format for counts (e.g. 3.1Cr)
+            return typeof v === 'number' ? fmtLacs(v) : v;
+          },
+          style: { fontSize: '11px', fontWeight: 'bold' }
+        },
+        plotOptions: {
+          pie: {
+            expandOnClick: true,
+            dataLabels: { offset: -5 }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            formatter: (label, opt) => {
+              const v = opt.w.globals.series[opt.seriesIndex];
+              return label + ': ' + (typeof v === 'number' ? fmtLacs(v) : v);
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: c => ` ${c.label}: ${fmtNum(c.parsed)} (${Math.round((c.parsed / total) * 100)}%)`
+            }
+          }
+        }
+      }
+    });
+  }
+
+}
+
+// ══════════════════════════════════════════════════════
+// ALLIANCES PAGE
+// ══════════════════════════════════════════════════════
+function renderAlliances() {
+  const container = document.getElementById('allianceCards');
+  if (!container) return;
+  
+  // Initialize alliance-specific charts if containers exist
+
+
+  const alliances = TN_DATA.alliances.filter(a => a.id !== 'independent');
+
+  // Badge styles based on party type
+  const isDark = document.documentElement.classList.contains('dark-mode');
+  const typeColorMap = isDark ? {
+    'National Party': { bg: '#1A2E44', text: '#64B5F6', border: '#254A6E' },
+    'State Party': { bg: '#33271A', text: '#FFB74D', border: '#4E3B29' },
+    'Unrecognised': { bg: '#27272E', text: '#A1A1AA', border: '#3F3F46' },
+    'Independent': { bg: '#1E2D1A', text: '#81C784', border: '#2B4225' },
+    'State Party - Other': { bg: '#23112E', text: '#BA68C8', border: '#3A1B4B' }
+  } : {
+    'National Party': { bg: '#E3F2FD', text: '#1565C0', border: '#BBDEFB' },
+    'State Party': { bg: '#FFF3E0', text: '#E65100', border: '#FFE0B2' },
+    'Unrecognised': { bg: '#F5F5F5', text: '#616161', border: '#E0E0E0' },
+    'Independent': { bg: '#F1F8E9', text: '#33691E', border: '#DCEDC8' },
+    'State Party - Other': { bg: '#F3E5F5', text: '#4A148C', border: '#E1BEE7' }
+  };
+
+  const resSummary = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.summary.alliance_results) 
+    ? RESULTS_2026_DRAFT.summary.alliance_results : {};
+  const partyResults = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.summary.party_results) 
+    ? RESULTS_2026_DRAFT.summary.party_results : {};
+
+  const resKeyMap = {
+    'spa': 'SPA-DMK+',
+    'nda': 'NDA-ADMK+',
+    'tvk': 'TVK',
+    'ntk': 'NTK',
+    'others': 'OTHERS',
+    'mnm': 'MNM',
+    'ammk': 'AMMK'
+  };
+
+  container.innerHTML = alliances.map(a => {
+    const partiesInAlliance = TN_DATA.parties
+      .filter(p => p.alliance === a.id && p.id !== 'oth' && p.type !== 'Independent')
+      .sort((p1, p2) => p2.seatsContested - p1.seatsContested);
+    
+    const wonCount = resSummary[resKeyMap[a.id]] ? resSummary[resKeyMap[a.id]].won : 0;
+
+    return `
+
+      <style>
+        .alliance-card-v2 {
+          background: var(--surface);
+          padding: 3rem;
+          border-radius: 32px;
+          box-shadow: var(--shadow);
+          border: 1px solid var(--border);
+          margin-bottom: 4rem;
+          position: relative;
+        }
+        .alliance-dash-grid {
+          display: block;
+        }
+
+        .party-list-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          padding: 0;
+        }
+        .party-detail-row {
+          display: flex;
+          align-items: center;
+          padding: 1.25rem 0;
+          border-bottom: 1px solid var(--border);
+        }
+        .party-detail-row:last-child { border-bottom: none; }
+        .p-info-main { flex: 1; }
+        .p-top-flex { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; }
+        .p-main-meta { display: flex; align-items: center; gap: 0.75rem; }
+        .p-pipe { color: var(--border); font-size: 1rem; }
+        .p-abbr { font-size: 1.15rem; font-weight: 950; color: var(--text); }
+        .p-badge { 
+          padding: 2px 10px; 
+          border-radius: 50px; 
+          font-size: 0.55rem; 
+          font-weight: 900; 
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+        .p-leader { font-size: 0.78rem; color: var(--text-2); font-weight: 600; }
+        .p-seats-hero {
+          font-size: 1.5rem;
+          font-weight: 950;
+          font-family: var(--font-mono);
+          color: var(--text);
+          margin-left: 1.5rem;
+        }
+        .p-prog-v2 {
+          width: 100%;
+          height: 4px;
+          background: var(--surface-alt);
+          border-radius: 2px;
+          margin-top: 8px;
+          overflow: hidden;
+        }
+        @media (max-width: 1280px) {
+          .alliance-card-v2 { padding: 2rem; }
+        }
+        @media (max-width: 600px) {
+          .alliance-title-hero { font-size: 1.4rem; }
+          .alliance-card-v2 { padding: 1.25rem; border-radius: 20px; }
+          .p-top-flex { display: block; }
+          .p-main-meta { gap: 0.5rem; }
+          .p-pipe { display: none; }
+          .p-leader { display: block; margin-top: 0.35rem; padding-left: 0; font-size: 0.72rem; }
+          .p-abbr { font-size: 1rem; }
+          .p-seats-hero { font-size: 1.1rem; margin-left: 0.5rem; }
+          .p-badge { padding: 1px 6px; font-size: 0.5rem; }
+        }
+        .dark-mode .alliance-card-v2 {
+            background: #18181B;
+            border-color: #2D2D33;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+        }
+        .dark-mode .p-icon-wrap {
+            background: #27272A !important;
+            border-color: #3F3F46 !important;
+        }
+      </style>
+
+      <div class="alliance-card-v2">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+          <h2 class="alliance-title-hero" style="color: ${a.color}; margin-bottom: 0;">${(a.id === 'spa' || a.id === 'nda') ? a.name + ' ALLIANCE' : a.name}</h2>
+          <div style="background: ${a.color}; color: #fff; padding: 0.6rem 1.6rem; border-radius: 50px; font-weight: 950; font-size: 1.25rem; box-shadow: 0 4px 15px ${a.color}44; display: flex; align-items: center; gap: 10px;">
+             <span class="iconify" data-icon="carbon:trophy-filled" style="font-size: 1.4rem;"></span>
+             <span>${wonCount} SEATS WON</span>
+          </div>
+        </div>
+        
+        <div class="alliance-dash-grid">
+          <!-- BOTTOM: PARTY LIST -->
+          <div class="party-list-details">
+            ${partiesInAlliance.map(p => {
+      const tStyle = typeColorMap[p.type] || typeColorMap['Unrecognised'];
+      const pWon = (partyResults[p.code] || partyResults[p.name]) ? (partyResults[p.code] || partyResults[p.name]).won : (p.won || 0);
+
+      return `
+                <div class="party-detail-row">
+                  <div class="p-info-main">
+                    <div class="p-top-flex">
+                      <div class="p-main-meta">
+                        <div class="p-icon-wrap" style="width: 36px; height: 26px; background: #fff; border: 1.2px solid #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                          ${p.icon ? `<img src="${p.icon}" alt="" style="width: 100%; height: 100%; object-fit: contain;">` : `<span style="font-weight:900; font-size:0.55rem; color:#888;">${p.name}</span>`}
+                        </div>
+                        <span class="p-abbr">${renderPartyCode(p)}</span>
+                        <span class="p-badge" style="background: ${tStyle.bg}; color: ${tStyle.text}; border: 1px solid ${tStyle.border}">${p.type}</span>
+                        ${pWon > 0 ? `<span style="background: #43A047; color: #fff; padding: 1px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 900; letter-spacing: 0.5px;">${pWon} WON</span>` : ''}
+                      </div>
+                      <span class="p-pipe">|</span>
+                      <span class="p-leader">${p.leader || '—'}</span>
+                    </div>
+                    <div class="p-prog-v2">
+                      <div style="width: ${Math.round((p.seatsContested / (a.seatsContested || 1)) * 100)}%; height: 100%; background: ${p.color || a.color}; border-radius: 3px;"></div>
+                    </div>
+                    ${a.id === 'nda' && p.name === 'ADMK' ? `
+                      <div style="margin-top: 0.6rem; font-size: 0.65rem; color: #888; font-weight: 800; letter-spacing: 0.04em; padding-left: 2px; text-transform: uppercase;">
+                        Parties contesting in ADMK symbol:
+                        <div style="color: #444; font-size: 0.68rem; font-weight: 750; margin-top: 0.2rem; text-transform: none;">IJK (2) • PB (1) • TMMK (1) • PNK (1) • STMK (1)</div>
+                      </div>
+                    ` : ''}
+                    ${a.id === 'nda' && p.name === 'BJP' ? `
+                      <div style="margin-top: 0.6rem; font-size: 0.65rem; color: #888; font-weight: 800; letter-spacing: 0.04em; padding-left: 2px; text-transform: uppercase;">
+                        Parties contesting in BJP symbol:
+                        <div style="color: #444; font-size: 0.68rem; font-weight: 750; margin-top: 0.2rem; text-transform: none;">TMC(M) (5) • PNK (1) • SIFB (1)</div>
+                      </div>
+                    ` : ''}
+                    ${a.id === 'spa' && p.name === 'DMK' ? `
+                      <div style="margin-top: 0.6rem; font-size: 0.65rem; color: #888; font-weight: 800; letter-spacing: 0.04em; padding-left: 2px; text-transform: uppercase;">
+                        Parties contesting in DMK symbol:
+                        <div style="color: #444; font-size: 0.68rem; font-weight: 750; margin-top: 0.2rem; text-transform: none;">MMK (2) • KMDK (2) • MDMK (3) • MP (1) • SDPI (1) • MJK (1) • TDK (1)</div>
+                      </div>
+                    ` : ''}
+                    ${p.id === 'tvk_ind' ? `
+                      <div style="margin-top: 0.6rem; font-size: 0.65rem; color: #888; font-weight: 800; letter-spacing: 0.04em; padding-left: 2px; text-transform: uppercase;">
+                        Alliance Support:
+                        <div style="color: #444; font-size: 0.68rem; font-weight: 750; margin-top: 0.2rem; text-transform: none;">Supported by Tamilaga Vettri Kazhagam (TVK)</div>
+                      </div>
+                    ` : ''}
+                  </div>
+                  <div style="display: flex; gap: 1.5rem; text-align: center;">
+                    <div>
+                      <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Contested</div>
+                      <div class="p-seats-hero" style="margin-left: 0;">${p.seatsContested}</div>
+                    </div>
+                    <div>
+                      <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Won</div>
+                      <div class="p-seats-hero" style="margin-left: 0; color: ${p.color || a.color};">${pWon}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+    }).join('')}
+          </div>
+        </div>
+
+        <!-- FULL WIDTH CTA AT BOTTOM -->
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Home: Party-wise candidate bars ──────────────────
+function renderHomePartyBars() {
+  const container = document.getElementById('homePartyBars');
+  if (!container || !TN_DATA.parties) return;
+
+  const parties = TN_DATA.parties
+    .filter(p => p.candidates > 0 &&
+      p.alliance !== 'independent' &&
+      p.id !== 'ind' &&
+      p.code !== 'IND' &&
+      p.id !== 'oth' &&
+      p.id !== 'others')
+    .sort((a, b) => b.candidates - a.candidates);
+
+  const maxSeats = Math.max(...parties.map(p => p.candidates), 1);
+
+  container.innerHTML = parties.map(p => {
+    const pct = Math.max((p.candidates / maxSeats) * 100, 2);
+    const color = p.color || partyColor(p.name);
+    return `
+      <div class="progress-row">
+        <div class="progress-label"><span>${renderPartyCode(p)}</span><span>${fmtNum(p.candidates)}</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${color};"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+
+
+
+
+window.parlHover = function (cid, label, color, count) {
+  const container = document.getElementById(cid);
+  if (!container) return;
+  const dots = container.querySelectorAll('.parl-dot');
+  dots.forEach(d => {
+    if (d.getAttribute('data-label') === label) {
+      d.setAttribute('r', '5.2');
+      d.setAttribute('stroke-width', '0.6');
+      d.style.opacity = '1';
+    } else {
+      d.style.opacity = '0.25';
+    }
+  });
+  const centerText = document.getElementById(cid + '_label');
+  const centerCount = document.getElementById(cid + '_count');
+  if (centerText && centerCount) {
+    centerText.textContent = label;
+    centerText.setAttribute('fill', color === '#E2E8F0' ? 'var(--text)' : color);
+    centerCount.textContent = count;
+  }
+};
+
+
+// ══════════════════════════════════════════════════════
+// MANIFESTO PAGE
+// ══════════════════════════════════════════════════════
+let currentManifestoSector = "All Sectors";
+
+function renderManifesto() {
+  if (typeof TN_MANIFESTO_CFI === 'undefined') return;
+  const sectors = ["All Sectors", ...new Set(TN_MANIFESTO_CFI.map(m => m.sector))].sort((a, b) => {
+    if (a === "All Sectors") return -1;
+    if (b === "All Sectors") return 1;
+    return a.localeCompare(b);
+  });
+
+  // 1. Render Top Cards
+  const cardsContainer = document.getElementById('manifestoTopCards');
+  if (cardsContainer && !cardsContainer.innerHTML.trim()) {
+    const topData = [
+      { id: 'spa', name: 'SPA', full: 'Secular Progressive Alliance', head: 'DMK (M.K. Stalin)', parties: 'Congress · CPI · CPI(M) · VCK · MDMK · IUML', color: '#E53935' },
+      { id: 'nda', name: 'NDA', full: 'National Democratic Alliance (TN)', head: 'ADMK (K. Palaniswami)', parties: 'BJP · PMK · DMDK · Tamil Maanila Congress', color: '#43A047' },
+      { id: 'tvk', name: 'TVK', full: 'Tamilaga Vettri Kazhagam', head: 'Vijay (Thalapathy)', parties: 'New party — independent alliance formation underway', color: '#A67C00' },
+      { id: 'ntk', name: 'NTK', full: 'Nam Tamilar Katchi', head: 'Seeman', parties: 'Contested independently — Tamil nationalism focus', color: '#b31818' }
+    ];
+    cardsContainer.innerHTML = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; margin-bottom: 1.5rem;">
+        ${topData.map(d => `
+           <div class="card" style="text-align:center; padding: 1.5rem; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+             <h3 style="color:${d.color}; font-weight:800; font-size:1.3rem; margin-bottom:5px;">${d.name}</h3>
+             <div style="font-size:0.75rem; color:var(--text-2); font-weight:600; margin-bottom:12px;">${d.full}</div>
+             <div style="font-size:0.75rem; font-weight:700; color:${d.color}; margin-bottom:5px;">Head: ${d.head}</div>
+             <div style="font-size:0.65rem; color:var(--text-3); line-height:1.4;">${d.parties}</div>
+           </div>
+        `).join('')}
+      </div>`;
+  }
+
+  // 2. Render Pill Filters
+  const pillsContainer = document.getElementById('manifestoPillFilters');
+  const sectorEmojiMap = {
+    "Agriculture & Water": "🚜",
+    "Economy & Infrastructure": "🏗️",
+    "Education": "🎓",
+    "Environment & Ecology": "🌿",
+    "Governance & Administration": "⚖️",
+    "Health & Social Welfare": "🏥",
+    "Tamil Identity & Culture": "🏛️",
+    "All Sectors": "✨"
+  };
+
+  if (pillsContainer) {
+    pillsContainer.innerHTML = sectors.map(s => {
+      const isActive = s === currentManifestoSector;
+      const emoji = sectorEmojiMap[s] || "📁";
+      return `<button class="btn btn-outline manifesto-pill ${isActive ? 'active' : ''}" data-trigger="setManifestoSector" data-arg="${s}" style="border-radius:20px; font-size:0.75rem; padding: 0.4rem 1rem; border:1px solid ${isActive ? 'var(--border)' : 'var(--surface-alt)'}; ${isActive ? 'background:var(--surface); box-shadow:var(--shadow-sm); font-weight:700; color:var(--text);' : 'background:transparent; color:var(--text-2);'}">${emoji} ${s}</button>`;
+    }).join('');
+  }
+
+  filterManifesto();
+}
+
+window.setManifestoSector = function (sector) {
+  currentManifestoSector = sector;
+  renderManifesto();
+};
+
+function filterManifesto() {
+  if (typeof TN_MANIFESTO_CFI === 'undefined') return;
+
+  const searchInput = document.getElementById('manifestoSearch');
+  const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  const list = TN_MANIFESTO_CFI.filter(m => {
+    const matchSector = currentManifestoSector === "All Sectors" || m.sector === currentManifestoSector;
+    if (!matchSector) return false;
+    if (!q) return true;
+
+    // check if query matches anywhere in this manifesto item
+    const inTopic = m.topic.toLowerCase().includes(q);
+    const inSPA = m.spa.tag.toLowerCase().includes(q) || m.spa.text.some(t => t.toLowerCase().includes(q));
+    const inNDA = m.nda.tag.toLowerCase().includes(q) || m.nda.text.some(t => t.toLowerCase().includes(q));
+    const inTVK = m.tvk.tag.toLowerCase().includes(q) || m.tvk.text.some(t => t.toLowerCase().includes(q));
+    const inNTK = m.ntk.tag.toLowerCase().includes(q) || m.ntk.text.some(t => t.toLowerCase().includes(q));
+
+    return inTopic || inSPA || inNDA || inTVK || inNTK;
+  });
+
+  const tbl = document.getElementById('manifestoTable');
+  if (!tbl) return;
+
+  if (!list.length) {
+    tbl.innerHTML = '<tr><td style="text-align:center;color:var(--text-3);padding:2rem;">No manifesto items match your filter.</td></tr>';
+    return;
+  }
+
+  const grouped = {};
+  list.forEach(m => {
+    if (!grouped[m.sector]) grouped[m.sector] = [];
+    grouped[m.sector].push(m);
+  });
+
+  const headersHTML = `
+      <tr>
+        <th style="background:var(--surface); vertical-align:bottom; padding: 1.5rem; font-size:.9rem; color:var(--text); border-right:1px solid var(--border);">Policy Area</th>
+        <th style="background:var(--surface); border-top:4px solid #E53935; text-align:center; min-width:200px; padding:1.5rem; border-right:1px solid var(--border);">
+           <div style="font-size:1.8rem; margin-bottom:5px;"></div>
+           <div style="color:#E53935; font-weight:800; font-size:1.2rem;">SPA / DMK+</div>
+           <div style="font-size:0.65rem; color:var(--text-3); font-weight:normal; margin-top:3px;">Head: DMK</div>
+        </th>
+        <th style="background:var(--surface); border-top:4px solid #43A047; text-align:center; min-width:200px; padding:1.5rem; border-right:1px solid var(--border);">
+           <div style="font-size:1.8rem; margin-bottom:5px;"></div>
+           <div style="color:#43A047; font-weight:800; font-size:1.2rem;">NDA / ADMK+</div>
+           <div style="font-size:0.65rem; color:var(--text-3); font-weight:normal; margin-top:3px;">Head: ADMK</div>
+        </th>
+        <th style="background:var(--surface); border-top:4px solid #b31818; text-align:center; min-width:200px; padding:1.5rem; border-right:1px solid var(--border);">
+           <div style="font-size:1.8rem; margin-bottom:5px;"></div>
+           <div style="color:#b31818; font-weight:800; font-size:1.2rem;">NTK</div>
+           <div style="font-size:0.65rem; color:var(--text-3); font-weight:normal; margin-top:3px;">Head: Seeman</div>
+        </th>
+        <th style="background:var(--surface); border-top:4px solid #A67C00; text-align:center; min-width:200px; padding:1.5rem; ">
+           <div style="font-size:1.8rem; margin-bottom:5px;"></div>
+           <div style="color:#A67C00; font-weight:800; font-size:1.2rem;">TVK</div>
+           <div style="font-size:0.65rem; color:var(--text-3); font-weight:normal; margin-top:3px;">Head: Vijay</div>
+        </th>
+      </tr>
+  `;
+
+  let rowsHTML = '';
+  const highlighter = (text) => {
+    if (!q) return text;
+    const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark style="background-color: yellow; padding: 0 2px; border-radius: 2px;">$1</mark>');
+  };
+
+  for (const [sectorName, items] of Object.entries(grouped)) {
+    const sectorEmojiMap = {
+      "Agriculture & Water": "🚜",
+      "Economy & Infrastructure": "🏗️",
+      "Education": "🎓",
+      "Environment & Ecology": "🌿",
+      "Governance & Administration": "⚖️",
+      "Health & Social Welfare": "🏥",
+      "Tamil Identity & Culture": "🏛️"
+    };
+    const emoji = sectorEmojiMap[sectorName] || "📁";
+
+    rowsHTML += `
+          <tr style="background: #F4F6F9; border-top: 2px solid var(--border);">
+             <td colspan="5" style="padding: 0.85rem 1.5rem; border-bottom:1px solid var(--border);">
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                   <span style="font-size:0.85rem; font-weight:800; color:var(--text); text-transform:uppercase; letter-spacing:1px;">${emoji} ${sectorName}</span>
+                </div>
+             </td>
+          </tr>
+      `;
+    items.forEach((m, idx) => {
+      const listToHTML = (obj, color, bg) => {
+        if (typeof obj === 'string') return highlighter(obj);
+        if (!obj) return '';
+
+        const renderSingle = (o) => {
+          if (!o || typeof o !== 'object') return '';
+          let tagsHtml = '';
+          if (o.tag && o.tag !== "-") {
+            const tags = Array.isArray(o.tag) ? o.tag : [o.tag];
+            tagsHtml = `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom: 6px;">` +
+              tags.map(t => `<span style="font-size: 0.62rem; font-weight:800; letter-spacing:.05em; background: ${bg}; color: ${color}; padding: 3px 8px; border-radius: 4px; display:inline-block;">${highlighter(t)}</span>`).join('') +
+              `</div>`;
+          }
+          let html = tagsHtml;
+          if (o.text && Array.isArray(o.text)) {
+            html += `<div style="display:flex; flex-direction:column; gap:6px;">${o.text.map(t => `<div style="font-size:0.8rem; line-height:1.4; color:var(--text-2);">${highlighter(t)}</div>`).join('')}</div>`;
+          }
+          return `<div style="margin-bottom: 16px; font-size:inherit;">${html}</div>`;
+        };
+
+        if (Array.isArray(obj)) {
+          return obj.map(o => renderSingle(o)).join('');
+        }
+        return renderSingle(obj);
+      };
+      const rowBg = idx % 2 === 1 ? 'background: #FAFBFC;' : 'background: #ffffff;';
+      rowsHTML += `
+          <tr style="${rowBg}">
+            <td style="vertical-align:top; border-right:1px solid var(--border); padding: 1.5rem; border-bottom:1px solid var(--border);">
+               <strong style="color:var(--text); font-size:0.88rem;">${highlighter(m.topic)}</strong>
+            </td>
+            <td style="vertical-align:top; border-right:1px solid var(--border); padding: 1.5rem; border-bottom:1px solid var(--border);">${listToHTML(m.spa, '#C62828', '#FFEBEE')}</td>
+            <td style="vertical-align:top; border-right:1px solid var(--border); padding: 1.5rem; border-bottom:1px solid var(--border);">${listToHTML(m.nda, '#43A047', '#E8F5E9')}</td>
+            <td style="vertical-align:top; border-right:1px solid var(--border); padding: 1.5rem; border-bottom:1px solid var(--border);">${listToHTML(m.ntk, '#8E1600', '#F9EBEA')}</td>
+            <td style="vertical-align:top; padding: 1.5rem; border-bottom:1px solid var(--border);">${listToHTML(m.tvk, '#F9A825', '#FFFDE7')}</td>
+          </tr>
+          `;
+    });
+  }
+
+  tbl.innerHTML = `
+    <thead>${headersHTML}</thead>
+    <tbody>${rowsHTML}</tbody>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+// CANDIDATES PAGE
+// ══════════════════════════════════════════════════════
+let filteredCandidates = [...TN_DATA.candidates];
+
+function renderCandidates() {
+  console.log('Rendering Candidates. Count:', TN_DATA.candidates ? TN_DATA.candidates.length : 'N/A');
+  const tableCard = document.getElementById('candidateTableCard');
+  const filters = document.querySelector('.filter-bar');
+  const tabs = document.querySelector('.tabs');
+
+  if (!TN_DATA.candidates || TN_DATA.candidates.length === 0) {
+    if (tableCard) tableCard.style.display = 'none';
+    if (filters) filters.style.display = 'none';
+    if (tabs) tabs.style.display = 'none';
+
+    const page = document.getElementById('page-candidates');
+    if (page) {
+      const old = document.getElementById('candEmptyState');
+      if (old) old.remove();
+      const div = document.createElement('div');
+      div.id = 'candEmptyState';
+      div.style = 'background:var(--surface);border-radius:12px;border:1px dashed var(--border);padding:4rem 2rem;text-align:center;max-width:500px;margin:3rem auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;box-shadow:var(--shadow-sm);';
+      div.innerHTML = `
+        <div style="width: 4.5rem; height: 4.5rem; border-radius: 50%; background: var(--surface-alt); display: flex; align-items: center; justify-content: center; font-size: 2rem; border:1px solid var(--border);">📋</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: var(--text);">No Candidates Declared Yet</div>
+        <p style="color:var(--text-3); font-size:0.95rem; margin:0; line-height: 1.6; max-width: 320px;">Nomination is in process we will update at the end of the day</p>
+      `;
+      page.appendChild(div);
+    }
+    return;
+  }
+
+  setCandView(currentCandView);
+  
+  // Render analytical charts for candidates
+  renderCandidateAnalyticsCharts();
+
+  document.getElementById('candSearch').addEventListener('input', filterCandidates);
+  document.getElementById('candAlliance').addEventListener('change', filterCandidates);
+  document.getElementById('candParty').addEventListener('change', filterCandidates);
+  if (document.getElementById('candGender')) {
+    document.getElementById('candGender').addEventListener('change', filterCandidates);
+  }
+  document.getElementById('candIncumbent').addEventListener('change', filterCandidates);
+  document.getElementById('candCategory').addEventListener('change', filterCandidates);
+
+  populateCandPartyOptions();
+
+  // Handle URL Params for deep linking
+  const urlParams = new URLSearchParams(window.location.search);
+  const allianceParam = urlParams.get('alliance');
+  const genderParam = urlParams.get('gender');
+  const viewParam = urlParams.get('view');
+
+  let shouldUpdateFilter = false;
+
+  if (allianceParam) {
+    const allianceSelect = document.getElementById('candAlliance');
+    if (allianceSelect) {
+      allianceSelect.value = allianceParam;
+      shouldUpdateFilter = true;
+    }
+  }
+
+  if (genderParam) {
+    const genderSelect = document.getElementById('candGender');
+    if (genderSelect) {
+      genderSelect.value = genderParam;
+      shouldUpdateFilter = true;
+    }
+  }
+
+  if (viewParam) {
+    setCandView(viewParam);
+  } else if (allianceParam || genderParam) {
+    // If we have filters but no explicit view, default to alliance view for better visual grouping
+    setCandView('alliance');
+  }
+
+  if (shouldUpdateFilter) {
+    filterCandidates(allianceParam);
+  }
+}
+
+function populateCandPartyOptions() {
+  const partySelect = document.getElementById('candParty');
+  if (!partySelect) return;
+
+  // Get unique parties from real candidate data, excluding empty/TBD
+  const parties = [...new Set(TN_DATA.candidates.map(c => getPartyCode(c.party)).filter(p => p && p !== "-" && p !== "TBD"))];
+  parties.sort((a, b) => a.localeCompare(b));
+
+  partySelect.innerHTML = '<option value="">All</option>' +
+    parties.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+let currentCandView = localStorage.getItem('lastCandView') || 'table';
+window.setCandView = function (view) {
+  currentCandView = view;
+  localStorage.setItem('lastCandView', view);
+  document.getElementById('candBtnTable').classList.toggle('active', view === 'table');
+  document.getElementById('candBtnAlliance').classList.toggle('active', view === 'alliance');
+  document.getElementById('candidateTableCard').style.display = view === 'table' ? 'block' : 'none';
+  const allianceView = document.getElementById('allianceWiseView');
+  if (allianceView) allianceView.style.display = view === 'alliance' ? 'block' : 'none';
+
+  // Toggle filter region: Hide for 'table' (Constituency View), show for others
+  const filterRegion = document.getElementById('candFiltersRegion');
+  if (filterRegion) {
+    filterRegion.style.display = (view === 'table') ? 'none' : 'flex';
+  }
+
+  filterCandidates();
+}
+
+window.toggleAllianceCard = function (btn) {
+  if (!btn) return;
+  const card = btn.closest('.alliance-card');
+  if (!card) return;
+  const content = card.querySelector('.alliance-card-content');
+  if (!content) return;
+
+  const isCollapsed = card.classList.toggle('collapsed');
+
+  if (isCollapsed) {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    content.offsetHeight; // force reflow
+    content.style.maxHeight = '0px';
+    btn.style.transform = 'rotate(-90deg)';
+  } else {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    btn.style.transform = 'rotate(0deg)';
+    setTimeout(() => {
+      if (!card.classList.contains('collapsed')) content.style.maxHeight = 'none';
+    }, 450);
+  }
+};
+
+function filterCandidates(autoExpand = null) {
+  const q = document.getElementById('candSearch').value.toLowerCase();
+  const alliance = document.getElementById('candAlliance').value;
+  const party = document.getElementById('candParty') ? document.getElementById('candParty').value : '';
+  const gender = document.getElementById('candGender') ? document.getElementById('candGender').value : '';
+  const incumbent = document.getElementById('candIncumbent').value;
+  const category = document.getElementById('candCategory') ? document.getElementById('candCategory').value : '';
+  const constLookup = TN_DATA.constituencies.reduce((acc, c) => { acc[c.id] = c; return acc; }, {});
+
+  filteredCandidates = TN_DATA.candidates.filter(c => {
+    const ac = constLookup[c.acNo];
+    return (!q || (c.name && c.name.toLowerCase().includes(q)) || (candConst(c) && candConst(c).toLowerCase().includes(q))) &&
+      (!alliance || c.alliance === alliance) &&
+      (!party || getPartyCode(c.party) === party) &&
+      (!gender || c.gender.includes(gender)) &&
+      (incumbent === '' || String(c.incumbent) === incumbent) &&
+      (!category || (ac && ac.category === category));
+  });
+
+  if (currentCandView === 'alliance') {
+    // If we have an alliance filter but no explicit autoExpand, use the filter value
+    const expandId = autoExpand || (alliance ? alliance : null);
+    renderAllianceWiseCandidates(filteredCandidates, expandId);
+  } else {
+    renderCandidateTable(filteredCandidates);
+  }
+
+  renderFilterTokens();
+}
+
+function renderFilterTokens() {
+  const container = document.getElementById('candFilterTokens');
+  if (!container) return;
+
+  const q = document.getElementById('candSearch').value;
+  const alliance = document.getElementById('candAlliance').value;
+  const party = document.getElementById('candParty') ? document.getElementById('candParty').value : '';
+  const gender = document.getElementById('candGender') ? document.getElementById('candGender').value : '';
+  const incumbent = document.getElementById('candIncumbent').value;
+
+  const tokens = [];
+
+  if (q) tokens.push({ label: `"${q}"`, type: 'Search' });
+  if (alliance) {
+    const option = document.querySelector(`#candAlliance option[value="${alliance}"]`);
+    tokens.push({ label: option ? option.innerText : alliance, type: 'Alliance' });
+  }
+  if (party) tokens.push({ label: party, type: 'Party' });
+  if (gender) tokens.push({ label: gender, type: 'Gender' });
+  if (incumbent !== '') {
+    tokens.push({ label: incumbent === 'true' ? 'Incumbents' : 'New Candidates', type: 'Incumbent' });
+  }
+  const category = document.getElementById('candCategory') ? document.getElementById('candCategory').value : '';
+  if (category) {
+    tokens.push({ label: category + ' Seat', type: 'Category' });
+  }
+
+  if (tokens.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+  container.innerHTML = `
+    <span style="font-size: 0.65rem; color: var(--text-3); font-weight: 800; text-transform:uppercase; align-self: center; margin-right: 0.25rem;">Active:</span>
+    ${tokens.map(t => `
+        <div style="display:inline-flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); padding:4px 10px; border-radius:100px; font-size:0.75rem; font-weight:700; color:var(--text); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <span>${t.label}</span>
+          <span style="opacity:0.6; font-size:14px; margin-left:4px; font-weight:bold; color:var(--accent);" class="clickable" data-trigger="clearCandFilter" data-arg="${t.type}">×</span>
+        </div>
+    `).join('')}
+    <div data-trigger="clearAllCandFilters" class="clickable" style="color:var(--accent); font-size:0.7rem; font-weight:800; align-self:center; margin-left:8px; text-decoration:none; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px dashed var(--accent);">Clear All</div>
+  `;
+}
+
+window.clearCandFilter = function (type) {
+  if (type === 'Search') document.getElementById('candSearch').value = '';
+  if (type === 'Alliance') document.getElementById('candAlliance').value = '';
+  if (type === 'Party') if (document.getElementById('candParty')) document.getElementById('candParty').value = '';
+  if (type === 'Gender' && document.getElementById('candGender')) document.getElementById('candGender').value = '';
+  if (type === 'Incumbent') document.getElementById('candIncumbent').value = '';
+  if (type === 'Category') document.getElementById('candCategory').value = '';
+  filterCandidates();
+}
+
+window.clearAllCandFilters = function () {
+  document.getElementById('candSearch').value = '';
+  document.getElementById('candAlliance').value = '';
+  if (document.getElementById('candParty')) document.getElementById('candParty').value = '';
+  if (document.getElementById('candGender')) document.getElementById('candGender').value = '';
+  document.getElementById('candIncumbent').value = '';
+  if (document.getElementById('candCategory')) document.getElementById('candCategory').value = '';
+  filterCandidates();
+}
+
+function renderAllianceWiseCandidates(list, autoExpand = null) {
+  const container = document.getElementById('allianceWiseView');
+  if (!container) return;
+
+  const rawAlliances = TN_DATA.alliances || [];
+  const alliances = rawAlliances.filter(a => a.id !== 'independent').concat([
+    { id: 'independent', name: 'Others / Independent', color: '#757575' }
+  ]);
+
+  container.innerHTML = alliances.map(a => {
+    const cands = list.filter(c => {
+      const cAlliance = c.alliance || 'independent';
+      if (a.id === 'independent') return !['spa', 'nda', 'tvk', 'ntk'].includes(cAlliance);
+      return cAlliance === a.id;
+    });
+
+    cands.sort((c1, c2) => {
+      const acDiff = parseInt(c1.acNo || 0) - parseInt(c2.acNo || 0);
+      if (acDiff !== 0) return acDiff;
+      return (parseInt(c1.slNo) || 999) - (parseInt(c2.slNo) || 999);
+    });
+
+    if (!cands.length) return '';
+
+    const isCollapsed = autoExpand ? (a.id !== autoExpand) : true;
+
+    return `
+      <div class="card alliance-card ${isCollapsed ? 'collapsed' : ''}" data-alliance-id="${a.id}" style="margin-bottom: 2rem; border:none; box-shadow: var(--shadow-sm); border-radius:12px; overflow:hidden;">
+        <div class="card-header" style="background: ${a.color}; border-bottom: none; padding: 1.2rem 1.5rem; display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="toggleAllianceCard(this.querySelector('.alliance-toggle-btn'))">
+          <h3 style="color: #fff; margin: 0; font-weight:800; display:flex; align-items:center; gap: 12px;">
+            <span>${(a.id === 'spa' || a.id === 'nda') ? a.name + ' ALLIANCE' : a.name}</span>
+            <span style="font-size: 0.7rem; background:rgba(255,255,255,0.2); padding:2px 10px; border-radius:100px; font-weight: 600; text-transform:uppercase; letter-spacing:0.5px;">${cands.length} Matches</span>
+          </h3>
+          <button class="alliance-toggle-btn" style="background:rgba(255,255,255,0.2); border:none; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: rotate(${isCollapsed ? '-90deg' : '0deg'});">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+        </div>
+        <div class="alliance-card-content" style="max-height: ${isCollapsed ? '0px' : 'none'}; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); overflow:hidden;">
+          <div class="card-body" style="padding:0;">
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="border:none;">
+                <thead>
+                  <tr style="background: ${a.color}15;">
+                    <th class="clickable hover-surface" style="width:60px; text-align:center; color:${a.color} !important; background:transparent !important; border:none; padding-right:1.2rem !important; transition: background 0.2s;">AC No.</th>
+                    <th class="clickable hover-surface" style="width:180px; color:${a.color} !important; background:transparent !important; border:none; padding-right:1.2rem !important; transition: background 0.2s;">Constituency</th>
+                    <th class="clickable hover-surface" style="width:400px; color:${a.color} !important; background:transparent !important; border:none; padding-right:1.2rem !important; transition: background 0.2s;">Candidate Name</th>
+                    <th class="clickable hover-surface" style="width:10px; width:100px; text-align:center; color:${a.color} !important; background:transparent !important; border:none; transition: background 0.2s;">Gender</th>
+                    <th class="clickable hover-surface" style="width:60px; color:${a.color} !important; background:transparent !important; border:none; transition: background 0.2s;">Age</th>
+                    <th class="clickable hover-surface" style="width:140px; color:${a.color} !important; background:transparent !important; border:none; padding-right:1.2rem !important; transition: background 0.2s;">Party</th>
+                    <th class="clickable hover-surface" style="color:${a.color} !important; background:transparent !important; border:none; transition: background 0.2s;">Education</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${cands.map(c => {
+      const constInfo = TN_DATA.constituencies.find(ac => ac.id === c.acNo);
+      const isIncumbent = c.incumbent === true || c.incumbent === "true";
+      return `
+                    <tr data-trigger="openCandModal" data-id="${c.id}" class="clickable hover-surface" style="font-size: 0.875rem;">
+                      <td data-label="AC No." style="text-align:center; font-weight:700; color:var(--text-3); font-family:var(--font-mono);">${c.acNo || (constInfo ? constInfo.id : '-')}</td>
+                      <td data-label="Constituency" style="font-weight:700;">${candConst(c)}</td>
+                      <td data-label="Candidate Name" style="font-weight:700;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                          <span>${c.name || ''}</span>
+                          ${isIncumbent ? `<span style="font-size:0.65rem; font-weight:850; text-transform:uppercase; color:#1565C0; background:rgba(21,101,192,0.08); padding:1px 6px; border-radius:3px; border:1px solid rgba(21,101,192,0.15);">MLA</span>` : ''}
+                        </div>
+                      </td>
+                      <td data-label="Gender" style="text-align:center; vertical-align:middle; font-weight:600; color:var(--text-2);">
+                        ${c.gender || '-'}
+                      </td>
+                      <td data-label="Age" style="color:var(--text-2); font-weight:600;">${c.age || '-'}</td>
+                      <td data-label="Party">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <img src="${partyIcon(c.party)}" style="width:22px; height:22px; object-fit:contain;" class="party-icon">
+                          <span style="font-weight:700; color:${partyColor(c.party)};">${renderPartyCode(c.party)}</span>
+                        </div>
+                      </td>
+                      <td data-label="Education" style="color:var(--text-2); font-weight:600;">${c.education || '-'}</td>
+                    </tr>
+                    `;
+    }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCandidateTable(list) {
+  const table = document.getElementById('candidateTable');
+  if (!table) return;
+
+  let validConst = [...TN_DATA.constituencies];
+  // Ensure numeric sort by ID
+  validConst.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
+  const q = document.getElementById('candSearch').value.toLowerCase();
+  if (q) {
+    const cMap = new Set(list.map(c => candConst(c)));
+    validConst = validConst.filter(c => cMap.has(c.name) || c.name.toLowerCase().includes(q));
+  }
+
+  if (!validConst.length) {
+    table.innerHTML = '<tr><td style="text-align:center;color:var(--text-3);padding:2rem;">No matching candidates or constituencies.</td></tr>';
+    return;
+  }
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th style="min-width:180px; cursor:pointer;" class="clickable hover-surface">Constituency <span style="font-size:0.75rem; opacity:0.5; margin-left:4px;">↕</span></th>
+        <th style="min-width:80px; border-top: 3px solid var(--border); cursor:pointer; text-align:center;" class="clickable hover-surface">Total <span style="font-size:0.75rem; opacity:0.5; margin-left:4px;">↕</span></th>
+        <th style="min-width:150px; border-top: 3px solid var(--spa); cursor:pointer;" class="clickable hover-surface">SPA / DMK+ <span style="font-size:0.75rem; opacity:0.5; margin-left:4px;">↕</span></th>
+        <th style="min-width:150px; border-top: 3px solid var(--nda); cursor:pointer;" class="clickable hover-surface">NDA / ADMK+ <span style="font-size:0.75rem; opacity:0.5; margin-left:4px;">↕</span></th>
+        <th style="min-width:150px; border-top: 3px solid var(--tvk); cursor:pointer;" class="clickable hover-surface">TVK <span style="font-size:0.75rem; opacity:0.5; margin-left:4px;">↕</span></th>
+        <th style="min-width:150px; border-top: 3px solid var(--ntk); cursor:pointer;" class="clickable hover-surface">NTK <span style="font-size:0.75rem; opacity:0.5; margin-left:4px;">↕</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${validConst.map(c => {
+    const cands = TN_DATA.candidates.filter(can => can.acNo === c.id && can.name);
+    const getCandHtml = (alliance) => {
+      const match = cands.find(can => can.alliance === alliance);
+      if (!match) return '<span style="color:var(--text-3);font-size:.8rem;">-</span>';
+
+      const nameDisplay = match.name && match.name.trim() !== '' ? match.name : '';
+      const isClickable = match.name && match.name.trim() !== '';
+      const iconPath = partyIcon(match.party);
+      const genderInitial = match.gender ? (match.gender.toLowerCase().includes('female') ? 'F' : (match.gender.toLowerCase().includes('third') || match.gender.toLowerCase().includes('trans') || match.gender.toLowerCase().includes('other') ? 'TG' : 'M')) : '';
+      const mlaBadge = match.incumbent ? `<span style="background:rgba(21,101,192,0.1); color:#1565C0; font-size:0.6rem; font-weight:850; padding: 0 5px; border-radius:3px; margin-left: auto; text-transform:uppercase;">MLA</span>` : '';
+
+      return `<div ${isClickable ? `data-trigger="openCandModal" data-id="${match.id}" class="clickable hover-surface"` : `style="cursor:default; opacity:0.8;"`} style="padding: .25rem; border-radius:4px; transition: background 0.2s;">
+             <div style="display:flex; align-items:center; gap:4px;">
+               <strong style="${getGenderStyle(match.gender)} font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding: 2px 4px; border-radius: 4px; flex:1;">
+                 ${nameDisplay}
+               </strong>
+               <span style="font-size:0.65rem; font-weight:850; color:var(--text-3); opacity:0.7;">${genderInitial}</span>
+             </div>
+
+             <div style="display:flex; align-items:center; gap:4px; margin-top:2px;">
+               <img src="${iconPath}" style="width:20px; height:20px; object-fit:contain; border-radius:1px;" class="party-icon">
+               <span style="font-size:.7rem;font-weight:700;color:${partyColor(match.party)};">${renderPartyCode(match.party)}</span>
+               ${mlaBadge}
+             </div>
+           </div>`;
+    };
+
+    return `<tr>
+           <td class="clickable" style="vertical-align:middle;" data-trigger="openConstituency" data-id="${c.id}">
+             <div style="font-size:.65rem; color:var(--text-3); font-weight:700; margin-bottom: 2px;">AC: ${c.id}</div>
+             <div style="color:var(--accent-2); font-weight:700; font-size:0.9rem;">${c.name}</div>
+           </td>
+           <td style="vertical-align:middle; text-align:center;">
+             <div style="font-weight:800; font-size:1.1rem; color:var(--text);">${cands.length}</div>
+           </td>
+           <td style="vertical-align:middle;">${getCandHtml('spa')}</td>
+           <td style="vertical-align:middle;">${getCandHtml('nda')}</td>
+           <td style="vertical-align:middle;">${getCandHtml('tvk')}</td>
+           <td style="vertical-align:middle;">${getCandHtml('ntk')}</td>
+         </tr>`;
+  }).join('')}
+    </tbody>
+  `;
+}
+
+
+
+window.openCandModal = function (id) {
+  if (!id) return;
+  const c = TN_DATA.candidates.find(x => x.id == id);
+  if (!c || !c.name || c.name.trim() === '') return;
+  const pColor = partyColor(c.party);
+  // Multi-seat contest discovery
+  const otherSeats = TN_DATA.candidates.filter(x => x.name === c.name && getPartyCode(x.party) === getPartyCode(c.party));
+  const multiSeatBadge = otherSeats.length > 1 ? `<div style="margin-top: 4px; display: inline-block; background: #FFF3E0; color: #E65100; font-size: 0.65rem; font-weight: 850; padding: 2px 8px; border-radius: 4px; border: 1px solid #FFE0B2; text-transform: uppercase; letter-spacing: 0.05em;">Multi-Seat Contest</div>` : '';
+
+  document.getElementById('modalTitle').textContent = c.name;
+  document.getElementById('modalBody').innerHTML = `
+    <!-- Header: Avatar + Party -->
+    <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.75rem; padding: 1.5rem; background: var(--surface-alt); border-radius: 16px; border: 1px solid var(--border);">
+      <div class="cd-cand-avatar" style="width: 72px; height: 72px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.06); background: var(--surface-alt);">
+        ${resolveCandidateImage(c) ? `<img src="${resolveCandidateImage(c)}" alt="${c.name}" onerror="this.src='${getAssetUrl('assets/party/placeholder.png')}'; this.onerror=null;">` :
+      `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" style="fill: var(--text-3);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22c.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>`}
+      </div>
+      <div style="flex: 1;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
+          <img src="${partyIcon(c.party)}" style="width: 24px; height: 24px; object-fit: contain;">
+          <span style="font-weight: 900; font-size: 1.2rem; color: ${pColor}; letter-spacing: -0.01em;">${renderPartyCode(c.party)}</span>
+        </div>
+        <div style="font-size: 0.8rem; font-weight: 750; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.8;">${allianceName(c.alliance, true)}</div>
+        ${multiSeatBadge}
+      </div>
+    </div>
+
+    <!-- Info Cards Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1.5rem;">
+      <!-- Gender Card -->
+      <div style="padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.62rem; font-weight: 850; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Gender</div>
+        <div style="font-size: 1.05rem; font-weight: 800; color: var(--text);">${renderGenderVisual(c.gender)}</div>
+      </div>
+      <div style="padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.62rem; font-weight: 850; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Age</div>
+        <div style="font-size: 1.05rem; font-weight: 800; color: var(--text);">${c.age ? c.age + ' Years' : '—'}</div>
+      </div>
+      <div style="padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); grid-column: span 2;">
+        <div style="font-size: 0.62rem; font-weight: 850; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Education</div>
+        <div style="font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.4;">${safeVal(c.education)}</div>
+      </div>
+      <div style="padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); grid-column: span 2;">
+        <div style="font-size: 0.62rem; font-weight: 850; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Profession</div>
+        <div style="font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.4;">${safeVal(c.profession)}</div>
+      </div>
+      <div style="padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm);">
+        <div style="font-size: 0.62rem; font-weight: 850; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Declared Assets</div>
+        <div style="font-size: 1.05rem; font-weight: 800; color: var(--text);">${safeVal(c.assets)}</div>
+      </div>
+      <div style="padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-size: 0.62rem; font-weight: 850; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Contested Symbol</div>
+          <div style="font-size: 1.05rem; font-weight: 800; color: var(--text);">${safeVal(c.symbol)}</div>
+        </div>
+        ${c.symbol ? `
+        <div class="cd-symbol-box" style="width:48px; height:48px;" title="Symbol: ${c.symbol}">
+          <img src="${getAssetUrl(`assets/symbols/${slugifyConstituencyName(c.symbol)}.png`)}" 
+               onerror="this.parentElement.style.display='none'" 
+               alt="${c.symbol}">
+        </div>` : ''}
+      </div>
+      <div style="padding: 1rem 1.25rem; background: ${c.criminal > 0 ? 'rgba(211, 47, 47, 0.04)' : 'var(--surface)'}; border: 1px solid ${c.criminal > 0 ? 'rgba(211, 47, 47, 0.15)' : 'var(--border)'}; border-radius: 12px; box-shadow: var(--shadow-sm); grid-column: span 2;">
+        <div style="font-size: 0.62rem; font-weight: 850; color: ${c.criminal > 0 ? '#d32f2f' : 'var(--text-3)'}; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Criminal Cases</div>
+        <div style="font-size: 1.05rem; font-weight: 900; color: ${c.criminal > 0 ? '#d32f2f' : 'var(--text)'};">${safeVal(c.criminal)}</div>
+      </div>
+    </div>
+
+    <!-- Contested Seats Sectin -->
+    <div style="margin-bottom: 1.75rem; padding: 1.25rem; background: #fff; border: 1px dashed var(--border); border-radius: 12px;">
+      <div style="font-size: 0.62rem; font-weight: 850; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.85rem;">Contested From</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        ${otherSeats.map(s => `
+          <div class="clickable hover-primary-text" 
+               style="color: var(--accent-2); font-weight: 900; font-size: 1.15rem; display: flex; align-items: center; justify-content: space-between;" 
+               data-trigger="openConstituencyBySearch" data-arg="${candConst(s)}">
+            <span>${candConst(s)}</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    
+    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 179, 0, 0.06); border-radius: 12px; border: 1px solid rgba(255, 179, 0, 0.15);">
+      <div style="font-size: 0.78rem; color: #856404; display: flex; align-items: flex-start; gap: 0.75rem; line-height: 1.5; font-weight: 500;">
+        <span style="font-size: 1.1rem; line-height: 1; filter: sepia(0.5);">⚠️</span>
+        <span>Demographics and asset data will be precisely verified following official nomination scrutinies.</span>
+      </div>
+    </div>
+  `;
+  document.getElementById('candModal').classList.add('open');
+}
+
+window.openOthersModal = function (constId) {
+  const c = TN_DATA.constituencies.find(x => x.id == constId);
+  if (!c) return;
+  const cands = TN_DATA.candidates.filter(can => can.acNo === c.id && can.name);
+  cands.sort((a, b) => (parseInt(a.slNo) || 999) - (parseInt(b.slNo) || 999));
+
+  document.getElementById('modalTitle').innerHTML = `
+    <div style="width: 100%; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
+        <div style="display: flex; flex-direction: column;">
+          <h2 style="margin:0; font-size: 1.5rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1;">
+            ${c.name} <span style="font-size: 0.95rem; color: #aaa; font-weight: 700; margin-left: 2px;">#${c.id}</span>
+          </h2>
+          <span style="font-size: 0.8rem; color: #888; font-weight: 700; margin-top: 2px;">Assembly Constituency Candidates</span>
+        </div>
+        <span style="background: var(--surface-alt); padding: 5px 14px; border-radius: 30px; font-size: 0.72rem; font-weight: 850; color: var(--text-2); border: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em;">
+          ${c.district}
+        </span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1.5rem; color: #555; font-size: 0.82rem; font-weight: 650; padding-top: 0.6rem; border-top: 1px solid var(--border);">
+        <span style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 1.1rem; filter: grayscale(1);">🗳️</span> 
+          <span><b>${c.electors ? c.electors.toLocaleString() : '—'}</b> Electors</span>
+        </span>
+        <span style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 1.1rem; filter: grayscale(1);">🏆</span> 
+          <span>Winner (2026): <b>${(typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results && RESULTS_2026_DRAFT.constituency_results[c.id] && RESULTS_2026_DRAFT.constituency_results[c.id].party !== '—') ? renderPartyCode(RESULTS_2026_DRAFT.constituency_results[c.id].party) : 'TBD'}</b></span>
+        </span>
+        <a data-trigger="openConstituency" data-id="${c.id}" class="clickable" style="margin-left: auto; color: var(--primary); font-weight: 900; text-decoration: none; border-bottom: 2px solid var(--primary); padding-bottom: 1px;">
+          FULL CONSTITUENCY ANALYTICS →
+        </a>
+      </div>
+    </div>
+  `;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:.85rem;">
+        <thead>
+          <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
+            <th style="padding:.75rem; text-align:left; font-weight:700; color:var(--text-2);">Sl.No</th>
+            <th style="padding:.75rem; text-align:left; font-weight:700; color:var(--text-2);">Candidate</th>
+            <th style="padding:.75rem; text-align:left; font-weight:700; color:var(--text-2);">Party</th>
+            <th style="padding:.75rem; text-align:center; font-weight:700; color:var(--text-2);">Symbol</th>
+            <th style="padding:.75rem; text-align:left; font-weight:700; color:var(--text-2);">Alliance</th>
+            <th style="padding:.75rem; text-align:right; font-weight:700; color:var(--text-2);">Assets</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cands.map(can => {
+    const isClickable = can.name && can.name.trim() !== '';
+    const nameDisplay = isClickable ? can.name : '';
+    const color = partyColor(can.party);
+    const iconPath = partyIcon(can.party);
+    return `<tr style="border-bottom:1px solid var(--border); transition:background 0.2s; ${isClickable ? '' : 'cursor:default;'}" ${isClickable ? `class="clickable hover-surface" data-trigger="openCandModal" data-id="${can.id}"` : ''}>
+              <td style="padding:.75rem; font-weight:700; color:var(--text-3);">${can.slNo || '-'}</td>
+              <td style="padding:.75rem; font-weight:600; color:var(--text);">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <span>${nameDisplay}</span>
+                  <div style="display:flex; align-items:center; gap:6px; font-size:0.65rem; opacity:0.8;">
+                    <span style="font-weight:700; color:var(--text-3); text-transform:uppercase;">${can.gender || '-'}</span>
+                    ${can.incumbent ? `<span style="opacity:0.3;">•</span><span style="color:#1565C0; font-weight:850; text-transform:uppercase;">MLA</span>` : ''}
+                  </div>
+                </div>
+              </td>
+              <td style="padding:.75rem;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <img src="${iconPath}" style="width:22px; height:22px; object-fit:contain;" class="party-icon">
+                  <span class="party-chip" style="background:${color}1A; color:${color}; padding:.2rem .5rem; border-radius:20px; font-size:.7rem; font-weight:600;">${renderPartyCode(can.party)}</span>
+                </div>
+              </td>
+              <td style="padding:.75rem; text-align:center;">
+                ${can.symbol ? `
+                  <div class="cd-symbol-box" style="width:32px; height:32px; margin: 0 auto;" title="Symbol: ${can.symbol}">
+                    <img src="${getAssetUrl(`assets/symbols/${slugifyConstituencyName(can.symbol)}.png`)}" 
+                         onerror="this.parentElement.style.display='none'" 
+                         alt="${can.symbol}">
+                  </div>` : '-'}
+              </td>
+              <td style="padding:.75rem; color:var(--text-2); font-weight:600;">${allianceName(can.alliance, true)}</td>
+              <td style="padding:.75rem; text-align:right; font-family:var(--font-mono); font-weight:500;">${safeVal(can.assets)}</td>
+            </tr>`;
+  }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('candModal').classList.add('open');
+}
+
+window.openHistoryModal = function (constId) {
+  const c = TN_DATA.constituencies.find(x => x.id == constId);
+  if (!c) return;
+
+  document.getElementById('modalTitle').innerHTML = `
+    <div style="width: 100%; text-align: left;">
+      <div style="display: flex; flex-direction: column;">
+        <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px;">
+          Election History
+        </div>
+        <h2 style="margin:0; font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; color: var(--text);">
+          #${c.id} ${c.name}
+        </h2>
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
+          ${c.district} District
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('modalBody').innerHTML = `
+    <div style="margin-top:0.5rem;">
+      <style>
+        .history-item:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.2s; }
+      </style>
+      ${renderHistoryItems(c)}
+    </div>
+  `;
+  document.getElementById('candModal').classList.add('open');
+};
+
+window.closeModal = function () { 
+  const modal = document.getElementById('candModal');
+  if (modal) modal.classList.remove('open'); 
+};
+
+const candModalEl = document.getElementById('candModal');
+if (candModalEl) {
+  candModalEl.addEventListener('click', e => { 
+    if (e.target === candModalEl) window.closeModal(); 
+  });
+}
+// ══════════════════════════════════════════════════════
+// CONSTITUENCIES PAGE
+// ══════════════════════════════════════════════════════
+function renderConstituencies() {
+  // Populate district filter
+  const distSel = document.getElementById('constDistrict');
+  if (distSel && distSel.options.length === 1) {
+    const dists = [...new Set(TN_DATA.constituencies.map(c => c.district))].sort();
+    dists.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; distSel.appendChild(o); });
+  }
+
+  renderConstGrid(TN_DATA.constituencies);
+
+  document.getElementById('constSearch').addEventListener('input', filterConst);
+  document.getElementById('constDistrict').addEventListener('change', filterConst);
+  document.getElementById('constCategory').addEventListener('change', filterConst);
+}
+
+function filterConst() {
+  const q = document.getElementById('constSearch').value.toLowerCase();
+  const dis = document.getElementById('constDistrict').value;
+  const cat = document.getElementById('constCategory').value;
+
+  const list = TN_DATA.constituencies.filter(c =>
+    (!q || c.name.toLowerCase().includes(q) || c.district.toLowerCase().includes(q) || String(c.id).includes(q)) &&
+    (!dis || c.district === dis) &&
+    (!cat || c.category === cat)
+  );
+  renderConstGrid(list);
+}
+
+function renderConstGrid(list) {
+  const grid = document.getElementById('constGrid');
+  const summary = document.getElementById('constPartySummary');
+
+  if (!grid) return;
+  if (!list.length) {
+    grid.innerHTML = '<p style="color:var(--text-3);font-size:.85rem;">No constituencies match your filters.</p>';
+    if (summary) summary.innerHTML = '';
+    return;
+  }
+
+  // Update party summary based on filter results (2026 Results)
+  if (summary) {
+    const counts = {};
+    list.forEach(c => {
+      const res2026 = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results)
+        ? RESULTS_2026_DRAFT.constituency_results[c.id] : null;
+      const winParty = res2026 && res2026.party !== '—' ? res2026.party : null;
+      if (winParty) {
+        counts[winParty] = (counts[winParty] || 0) + 1;
+      } else {
+        counts['TBD'] = (counts['TBD'] || 0) + 1;
+      }
+    });
+    const sortedParties = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    summary.innerHTML = sortedParties.map(([party, count]) => {
+      const color = party !== 'TBD' ? partyColor(party) : 'var(--text-3)';
+      const label = party !== 'TBD' ? renderPartyCode(party) : 'TBD';
+      return `<div style="background:${color}1A; border:1px solid ${color}33; border-radius:30px; padding: .3rem .75rem; font-size:.75rem; display:flex; align-items:center; gap:.4rem;">
+        <span style="font-weight:700; color:var(--text);">${label}</span>
+        <span style="color:${color}; font-weight:900; background:var(--surface); padding: .1rem .45rem; border-radius:10px; font-size:.65rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">${count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  grid.innerHTML = list.map(c => {
+    // 2026 Result Check
+    const res2026 = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results)
+      ? RESULTS_2026_DRAFT.constituency_results[c.id] : null;
+      
+    const winParty = res2026 && res2026.party !== '—' ? res2026.party : null;
+    
+    // Fallbacks
+    const color = winParty ? partyColor(winParty) : 'var(--text-3)';
+    const partyName = winParty ? renderPartyCode(winParty) : 'TBD';
+    const third = c.thirdGender !== undefined ? c.thirdGender : (c.other !== undefined ? c.other : (c.electors - c.male - c.female));
+    
+    return `
+      <div class="const-card clickable" data-trigger="openConstituency" data-id="${c.id}">
+        <div class="const-card-body">
+          <!-- Header: name + AC badge -->
+          <div class="const-card-header">
+            <div class="const-name">${c.name} ${renderCategoryBadge(c.category)}</div>
+            <span class="const-ac-badge">AC #${c.id}</span>
+          </div>
+          <div class="const-dist">${c.district}</div>
+          <!-- Electors Panel -->
+          <div class="const-electors-container">
+            <div class="const-electors-stat">
+              <div class="const-electors-lbl">Total Electors</div>
+              <div class="const-electors-val primary">${fmtNum(c.electors)}</div>
+            </div>
+          </div>
+        </div>
+        <!-- Winner Strip -->
+        <div class="const-winner-row" style="${winParty ? `background:${color}10; border-top-color:${color}28;` : ''}">
+          <span class="const-winner-lbl">2026 Winner</span>
+          <span class="const-winner-pill" style="${winParty ? `background:${color}18; color:${color};` : 'background:var(--surface-alt); color:var(--text-3);'}">
+            ${partyName}
+          </span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.openSidebar = function (ref) {
+  if (!ref) return;
+  const c = typeof ref === 'object'
+    ? ref
+    : TN_DATA.constituencies.find(x => x.id == ref || x.name === ref) || getConstituencyBySlug(ref);
+  if (!c) return;
+
+  const isDedicatedPage = isConstituencyDetailPage();
+  const overlay = document.getElementById('constSidebar');
+
+  if (!isDedicatedPage && !overlay) {
+    window.location.href = getConstituencyPath(c.id);
+    return;
+  }
+
+  const isVacant = typeof ASSEMBLY_VACANCIES !== 'undefined' && ASSEMBLY_VACANCIES[c.id];
+  const res2026 = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results)
+    ? RESULTS_2026_DRAFT.constituency_results[c.id] : null;
+  const winParty = isVacant ? 'VACANT' : (res2026 && res2026.party !== '—' ? res2026.party : null);
+  const winnerName = isVacant ? 'Vacant' : (res2026 ? res2026.candidate : null);
+  
+  // Robust matching: normalize names (remove spaces, dots, and case)
+  const norm = (n) => (n || '').toUpperCase().replace(/[^A-Z]/g, '');
+  const winnerObj = (winnerName && winnerName !== '—' && !isVacant) 
+    ? TN_DATA.candidates.find(can => can.acNo === c.id && norm(can.name) === norm(winnerName)) 
+    : null;
+
+  const winnerPhoto = isVacant ? null : (winnerObj ? resolveCandidateImage(winnerObj) : null);
+  const detailedWin = (typeof window.__detailedResults !== 'undefined' && !isVacant) 
+    ? window.__detailedResults.find(r => r["AC NO"] === c.id && r.POS === 1)
+    : null;
+  const winnerAge = isVacant ? '' : (detailedWin ? detailedWin.AGE : (winnerObj ? winnerObj.age : ''));
+  const color = isVacant ? '#64748b' : (winParty ? partyColor(winParty) : partyColor(c.prevWinner));
+
+  const stats = getConstHistory(c.id, c.name, c.prevWinner);
+  const mla = stats.currentMLA;
+  const history = stats.history;
+
+  const body = document.getElementById('sidebarBody');
+  if (!body) return;
+
+  body.style.padding = '0';
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  body.style.overflow = 'hidden';
+
+  // Build full candidate list (alliance-ordered)
+  const cands = TN_DATA.candidates.filter(can => can.acNo === c.id && can.name);
+  const allianceOrder = ['spa', 'nda', 'tvk', 'ntk'];
+
+  // Alliance badge label helper
+  const allianceBadge = (alliance, party) => {
+    if (alliance === 'independent' || alliance === 'ind') return 'INDEPENDENT';
+    if (alliance === 'tvk' || alliance === 'ntk') return alliance.toUpperCase();
+    return `${alliance.toUpperCase()} / ${party}`;
+  };
+
+  // Elector gender bar widths
+  const malePct = c.male ? ((c.male / c.electors) * 100).toFixed(1) : 49.5;
+  const femPct = c.female ? ((c.female / c.electors) * 100).toFixed(1) : 49.5;
+  const thirdPct = c.thirdGender ? ((c.thirdGender / c.electors) * 100).toFixed(2) : 1.0;
+  const candCount = c.candidates || cands.length;
+
+  // Full ordered candidates list (Sl.No order)
+  const allOrderedCands = [...cands];
+  allOrderedCands.sort((a, b) => (parseInt(a.slNo) || 999) - (parseInt(b.slNo) || 999));
+
+  // Result table generation logic
+  let resultsList = [];
+  if (typeof window.__detailedResults !== 'undefined') {
+    resultsList = window.__detailedResults.filter(r => r["AC NO"] === c.id);
+  }
+
+  const candListHtml = resultsList.length > 0
+    ? `
+      <div style="overflow-x:auto;">
+        <table class="results-table" style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+          <thead>
+            <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
+              <th style="padding:0.75rem; text-align:center; font-weight:700;">#</th>
+              <th style="padding:0.75rem; text-align:left; font-weight:700;">Candidate</th>
+              <th style="padding:0.75rem; text-align:left; font-weight:700;">Party</th>
+              <th style="padding:0.75rem; text-align:right; font-weight:700;">Votes</th>
+              <th style="padding:0.75rem; text-align:right; font-weight:700;">%</th>
+              <th style="padding:0.75rem; text-align:center; font-weight:700;">Loss</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${resultsList.map(r => {
+              const color = partyColor(r.PARTY);
+              return `
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:0.75rem; text-align:center; font-weight:800;">${r.POS}</td>
+                  <td style="padding:0.75rem; font-weight:700;">
+                    ${fmtName(r["CANDIDATE NAME"])}
+                    ${r.POS === 1 ? '<span class="iconify" data-icon="carbon:trophy-filled" style="color:#FFD700; margin-left:4px; vertical-align:middle;"></span>' : ''}
+                  </td>
+                  <td style="padding:0.75rem;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <img src="${partyIcon(r.PARTY)}" style="width:16px; height:16px;" onerror="this.style.display='none'">
+                      <span style="color:${color}; font-weight:700;">${renderPartyCode(r.PARTY)}</span>
+                    </div>
+                  </td>
+                  <td style="padding:0.75rem; text-align:right; font-weight:700;">${fmtNum(r.TOTAL)}</td>
+                  <td style="padding:0.75rem; text-align:right; font-weight:700;">${r["% VOTES OVER VALID VOTES"]}%</td>
+                  <td style="padding:0.75rem; text-align:center;">
+                    ${r["CANDIDATE NAME"] === 'NOTA' ? '<span style="color:var(--text-3); font-weight:800; font-size:0.65rem; background:var(--surface-alt); padding:2px 6px; border-radius:4px;">NA</span>' : (r["DEPOSIT LOSS"] === 'YES' ? '<span style="color:#d32f2f; font-weight:800; font-size:0.65rem; background:rgba(211,47,47,0.08); padding:2px 6px; border-radius:4px;">YES</span>' : '<span style="color:#2e7d32; font-weight:800; font-size:0.65rem; background:rgba(46,125,50,0.08); padding:2px 6px; border-radius:4px;">NO</span>')}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+    : `<div style="grid-column: 1 / -1; background: var(--surface-alt); border: 1px dashed var(--border); border-radius: 12px; padding: 4rem 2rem; text-align: center; color: var(--text-3); font-weight: 600;">
+         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" style="margin-bottom: 1rem; opacity: 0.2; fill: currentColor;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+         <p>No results data officially registered yet for 2026.</p>
+       </div>`;
+
+  // Next/Prev Navigation Logic
+  const allConst = [...TN_DATA.constituencies].sort((a, b) => a.id - b.id);
+  const currentIndex = allConst.findIndex(x => x.id === c.id);
+  const prevC = allConst[currentIndex - 1];
+  const nextC = allConst[currentIndex + 1];
+
+  const navHtml = `
+    <div class="cd-top-nav" style="display:flex; justify-content:space-between; align-items:center; padding: 0.75rem 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.25rem;">
+      ${prevC ? `
+        <a href="${getConstituencyPath(prevC)}" data-trigger="openConstituency" data-id="${prevC.id}" style="color: var(--text-2); display: flex; align-items: center; gap: 6px; text-decoration: none;" class="hover-primary-text">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          #${prevC.id} ${prevC.name}
+        </a>` : '<span></span>'}
+      
+
+      ${nextC ? `
+        <a href="${getConstituencyPath(nextC)}" data-trigger="openConstituency" data-id="${nextC.id}" style="color: var(--text-2); display: flex; align-items: center; gap: 6px; text-decoration: none;" class="hover-primary-text">
+          #${nextC.id} ${nextC.name}
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </a>` : '<span></span>'}
+    </div>
+  `;
+
+  body.innerHTML = navHtml + `
+    <div class="cd-scroll">
+
+      <!-- PAGE HEADER -->
+      <div class="cd-header">
+        <div class="cd-header-left">
+          <div class="cd-const-meta">
+            <span style="color:${color};">●</span> AC #${c.id} · ${renderCategoryBadge(c.category)} — ${c.district.toUpperCase()} DISTRICT
+          </div>
+          <h2 class="cd-const-name">${c.name}</h2>
+          <button class="cd-history-btn" data-trigger="openHistoryModal" data-id="${c.id}">
+            ELECTION HISTORY <svg width="18" height="18" viewBox="0 0 32 32" fill="currentColor" style="margin-left: 2px;"><path d="M10 6v2h8.59L6 20.59 7.41 22 20 9.41V18h2V6H10z"></path></svg>
+          </button>
+        </div>
+        <div class="cd-header-mla" style="display:flex; align-items:center; gap:1.25rem; background:var(--surface-alt); padding:1rem; border-radius:12px; border:1px solid var(--border);">
+            <div style="width: 55px; height: 55px; border-radius: 50%; overflow: hidden; border: 2.5px solid ${color}; flex-shrink: 0; background: var(--surface);">
+               ${winnerPhoto ? `<img src="${winnerPhoto}" style="width: 100%; height: 100%; object-fit: cover;">` : 
+                 `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#eee;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#ccc"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4s-4 1.79-4 4s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                  </div>`}
+            </div>
+            <div style="overflow:hidden;">
+               <div style="font-size: 0.72rem; font-weight: 900; color: ${color}; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">${isVacant ? 'Constituency Status' : '2026 Elected MLA'}</div>
+               <div style="font-size: 1.1rem; font-weight: 950; color: ${isVacant ? '#d32f2f' : 'var(--text)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${isVacant ? 'VACANT' : (fmtName(winnerName) || 'TBD')}</div>
+               <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+                  ${isVacant ? `
+                    <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-3); line-height: 1.3;">${isVacant.reason}</span>
+                  ` : `
+                    <div style="display:flex; align-items:center; gap:5px;">
+                      <img src="${partyIcon(winParty)}" style="height: 12px; width: auto;" onerror="this.style.display='none'">
+                      <span style="font-size: 0.75rem; font-weight: 800; color: ${color};">${winParty ? renderPartyCode(winParty) : 'TBD'}</span>
+                    </div>
+                    ${winnerAge ? `<span style="font-size:0.7rem; font-weight:800; color:var(--text-3); background:var(--surface); padding:1px 6px; border-radius:4px; border:1px solid var(--border);">${winnerAge} Yrs</span>` : ''}
+                  `}
+               </div>
+            </div>
+        </div>
+
+        <div class="cd-header-right">          
+          <div style="display:grid; grid-template-columns: 1fr; gap: 2rem;">
+            <!-- Column 1: Electors -->
+            <div>
+              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom: 0.85rem;">
+                <div class="cd-snapshot-num" style="font-size: 1.85rem; line-height:1;">${fmtNum(c.electors)}</div>
+                <div class="cd-snapshot-sub" style="font-size: 0.85rem; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px;">Electors</div>
+              </div>
+              
+              <div class="cd-gender-bar" style="height: 6px; border-radius: 3px;" data-tooltip="Male: ${fmtNum(c.male)} | Female: ${fmtNum(c.female)} | 3rd Gender: ${fmtNum(c.thirdGender)}">
+                <div class="cd-gender-fill" style="width:${malePct}%;background:#0066cc;"></div>
+                <div class="cd-gender-fill" style="width:${femPct}%;background:#cc0000;"></div>
+                <div class="cd-gender-fill" style="width:${thirdPct}%;background:#666666;"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-top:0.6rem; font-size:0.82rem; font-weight:900; color:var(--text-2); text-transform:uppercase;">
+                <span>Male: ${fmtNum(c.male)}</span>
+                <span>Female: ${fmtNum(c.female)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- TWO-COLUMN BODY -->
+      <div class="cd-body">
+
+        <!-- LEFT: Candidates list -->
+        <div class="cd-left">
+          <div class="cd-section-hd">
+            2026 Election Results
+          </div>
+
+          <div class="cd-cand-list">
+            ${candListHtml}
+          </div>
+        </div>
+
+        <!-- RIGHT: Map + Reels -->
+        <div class="cd-right">
+
+          <!-- Constituency Map -->
+          <div class="cd-map-card">
+            <div class="cd-map-title">${c.name} Constituency Map</div>
+            <div class="cd-map-subtitle">${c.district} District</div>
+            <div class="cd-map-img-wrap">
+              <img src="${getAssetUrl(`assets/maps/${c.name}.svg`)}"
+                   alt="${c.name} constituency map"
+                   style="max-width:100%;height:auto;display:block;margin:0 auto;border-radius:4px;"
+                   data-fallback="const-map" data-id="${c.id}">
+              <div style="display:none;padding:.75rem;color:var(--text-3);font-size:.78rem;font-style:italic;text-align:center;">Map not available</div>
+            </div>
+          </div>
+
+          <!-- Reels -->
+          <div class="cd-reels-card">
+            <div class="cd-reels-embed">
+              <iframe src="https://www.instagram.com/reel/${c.reels_id || 'C3M8W2SyfIs'}/embed/${document.documentElement.classList.contains('dark-mode') ? '?theme=dark' : ''}"
+                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                scrolling="no" allowtransparency="true"></iframe>
+            </div>
+            <a href="https://www.instagram.com/reel/${c.reels_id || 'C3M8W2SyfIs'}/" target="_blank" class="cd-reels-open">
+              Open in Instagram
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (overlay) {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+window.closeSidebar = function () { window.closeConstDetail(); };
+function renderHistoryItems(c) {
+  const stats = getConstHistory(c.id, c.name, c.prevWinner);
+  let history = [...stats.history];
+
+  // Add 2026 result if available
+  if (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results[c.id]) {
+    const res2026 = RESULTS_2026_DRAFT.constituency_results[c.id];
+    if (res2026.party !== '—' && !history.find(h => h.year == '2026')) {
+      const detailedWin = (typeof window.__detailedResults !== 'undefined') 
+        ? window.__detailedResults.find(r => r["AC NO"] == c.id && r.POS === 1)
+        : null;
+      const winPct = detailedWin ? detailedWin["% VOTES OVER VALID VOTES"] : null;
+
+      history.unshift({
+        year: '2026',
+        mla: fmtName(res2026.candidate),
+        party: res2026.party,
+        pct: winPct ? `${winPct}%` : ((res2026.margin && res2026.margin !== '—') ? fmtNum(res2026.margin) : '—')
+      });
+    }
+  }
+
+  return history.map(h => {
+    const color = partyColor(h.party);
+    return `
+      <div class="history-item" style="display:flex;align-items:center;gap:1rem;padding:.6rem .75rem;background:${color}12;border-radius:6px;margin-bottom:.5rem;border:1px solid ${color}1A;">
+        <div class="hist-year" style="width:40px;font-weight:800;font-size:.85rem;color:var(--text-3);">${h.year}</div>
+        <div class="hist-party" style="width:65px;color:${color};font-weight:800;font-size:.7rem;text-transform:uppercase;letter-spacing:0.5px;">${renderPartyCode(h.party)}</div>
+        <div class="hist-info" style="flex:1;font-weight:700;font-size:.82rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.mla}</div>
+        <div class="hist-pct" style="width:55px;text-align:right;font-weight:800;font-size:.75rem;color:var(--text-2);">${h.pct}</div>
+      </div>`;
+  }).join('');
+}
+
+window.openConstituencyBySearch = function (name) {
+  const c = TN_DATA.constituencies.find(x => x.name === name);
+  if (c) window.openConstituency(c);
+};
+
+window.navigate = function (path) {
+  window.location.href = path;
+};
+
+window.openConstituency = function (ref) {
+  if (!ref) return;
+  // If already on the dedicated constituency page, re-render in-place
+  if (isConstituencyDetailPage() && document.getElementById('sidebarBody')) {
+    const c = typeof ref === 'object'
+      ? ref
+      : TN_DATA.constituencies.find(x => x.id == ref || x.name === ref) || getConstituencyBySlug(ref);
+    if (c) {
+      const newUrl = getConstituencyPath(c.id);
+      window.history.pushState({}, '', newUrl);
+      window.openSidebar(c);
+      window.scrollTo(0, 0);
+      return;
+    }
+  }
+  window.location.href = getConstituencyPath(ref);
+};
+
+window.closeConstDetail = function () {
+  const overlay = document.getElementById('constSidebar');
+  if (overlay) {
+    overlay.classList.remove('open');
+    document.body.style.overflow = 'auto';
+  }
+  
+  // If on dedicated page, go back to results
+  if (isConstituencyDetailPage()) {
+    window.location.href = 'results.html';
+  }
+
+  // Handle in-page view toggle if it exists (for constituencies.html)
+  const exp = document.getElementById('constExplorerView');
+  const det = document.getElementById('constDetailView');
+  if (exp && det) {
+    exp.style.display = 'block';
+    det.style.display = 'none';
+    window.scrollTo(0, 0);
+  }
+};
+
+function renderConstituencyDetail(id) {
+  const c = TN_DATA.constituencies.find(x => x.id == id);
+  if (!c) return;
+
+  const v = document.getElementById('constDetailView');
+  const cands = TN_DATA.candidates.filter(can => can.acNo === c.id && can.name);
+  const third = c.thirdGender !== undefined ? c.thirdGender : (c.other !== undefined ? c.other : (c.electors - c.male - c.female));
+
+  const res2026 = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results)
+    ? RESULTS_2026_DRAFT.constituency_results[c.id] : null;
+  const winParty = res2026 && res2026.party !== '—' ? res2026.party : null;
+  const color = winParty ? partyColor(winParty) : 'var(--text-3)';
+  const partyName = winParty ? renderPartyCode(winParty) : 'TBD';
+
+
+
+  v.innerHTML = `
+      <button class="btn btn-outline clickable" style="margin-bottom:1rem;" data-trigger="closeConstDetail">← Back to Explorer</button>
+      
+    <div class="card" style="margin-bottom: 1.5rem; border: 1px solid var(--border);">
+      <div class="card-body" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+         <div>
+           <div style="font-size:.75rem; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:1px; margin-bottom:.25rem;">AC #${c.id} · ${c.district} District</div>
+           <h2 style="font-size:2rem; margin:0; line-height:1.2; display:flex; align-items:center; gap:12px;">${c.name} ${renderCategoryBadge(c.category)}</h2>
+         </div>
+         <div style="background:${winParty ? color+'1A' : 'var(--surface-alt)'}; padding:.75rem 1.25rem; border-radius:var(--radius); border:1px solid ${winParty ? color+'33' : 'var(--border)'}; text-align:center;">
+            <div style="font-size:.7rem; font-weight:700; color:var(--text-3); text-transform:uppercase;">2026 (Winner)</div>
+            <div style="font-size:1.1rem; font-weight:800; color:${color};">${partyName}</div>
+         </div>
+       </div>
+       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:1rem; border-top:1px solid var(--border); padding: 1.25rem;">
+          <div style="text-align:center;">
+             <div style="font-size:.65rem;font-weight:700;color:var(--text-3);text-transform:uppercase;">Total Electors</div>
+             <div class="val mono" style="font-size:1.3rem;">${c.electors.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="text-align:center;">
+             <div style="font-size:.65rem;font-weight:700;color:var(--text-3);text-transform:uppercase;">Male</div>
+             <div class="val mono" style="font-size:1.3rem;">${c.male.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="text-align:center;">
+             <div style="font-size:.65rem;font-weight:700;color:var(--text-3);text-transform:uppercase;">Female</div>
+             <div class="val mono" style="font-size:1.3rem;">${c.female.toLocaleString('en-IN')}</div>
+          </div>
+           <div style="text-align:center;">
+             <div style="font-size:.65rem;font-weight:700;color:var(--text-3);text-transform:uppercase;">3rd Gender</div>
+             <div class="val mono" style="font-size:1.3rem;">${third.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+     </div>
+
+
+     
+     <h3>2026 Election Results</h3>
+     <div style="margin-top:1rem;">
+        ${(() => {
+          let resultsList = [];
+          if (typeof window.__detailedResults !== 'undefined') {
+            resultsList = window.__detailedResults.filter(r => r["AC NO"] === c.id);
+          }
+
+          if (resultsList.length === 0) {
+            return '<div style="padding: 3rem; text-align: center; color: var(--text-3); font-weight: 600; border: 1px dashed var(--border); border-radius: 12px; background: var(--surface-alt);">No results data officially registered yet.</div>';
+          }
+
+          return `
+            <div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px;">
+              <table class="results-table" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead>
+                  <tr style="background:var(--surface-alt); border-bottom:2px solid var(--border);">
+                    <th style="padding:0.75rem; text-align:center; font-weight:700;">Pos</th>
+                    <th style="padding:0.75rem; text-align:left; font-weight:700;">Candidate</th>
+                    <th style="padding:0.75rem; text-align:left; font-weight:700;">Party</th>
+                    <th style="padding:0.75rem; text-align:right; font-weight:700;">Votes</th>
+                    <th style="padding:0.75rem; text-align:right; font-weight:700;">% Polled</th>
+                    <th style="padding:0.75rem; text-align:center; font-weight:700;">Deposit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${resultsList.map(r => {
+                    const color = partyColor(r.PARTY);
+                    return `
+                      <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:0.75rem; text-align:center; font-weight:800;">${r.POS}</td>
+                        <td style="padding:0.75rem; font-weight:700;">
+                          ${fmtName(r["CANDIDATE NAME"])}
+                          ${r.POS === 1 ? '<span class="iconify" data-icon="carbon:trophy-filled" style="color:#FFD700; margin-left:6px; vertical-align:middle;"></span>' : ''}
+                        </td>
+                        <td style="padding:0.75rem;">
+                          <div style="display:flex; align-items:center; gap:8px;">
+                            <img src="${partyIcon(r.PARTY)}" style="width:18px; height:18px;" onerror="this.style.display='none'">
+                            <span style="color:${color}; font-weight:700;">${renderPartyCode(r.PARTY)}</span>
+                          </div>
+                        </td>
+                        <td style="padding:0.75rem; text-align:right; font-weight:800; color:var(--text-2);">${fmtNum(r.TOTAL)}</td>
+                        <td style="padding:0.75rem; text-align:right; font-weight:800; color:var(--text-2);">${r["% VOTES OVER VALID VOTES"]}%</td>
+                        <td style="padding:0.75rem; text-align:center;">
+                          ${r["CANDIDATE NAME"] === 'NOTA' ? '<span style="color:var(--text-3); font-weight:900; font-size:0.65rem; background:var(--surface-alt); padding:3px 8px; border-radius:4px; border:1px solid var(--border);">N/A</span>' : (r["DEPOSIT LOSS"] === 'YES' ? '<span style="color:#d32f2f; font-weight:900; font-size:0.65rem; background:rgba(211,47,47,0.08); padding:3px 8px; border-radius:4px; border:1px solid rgba(211,47,47,0.15);">LOST</span>' : '<span style="color:#2e7d32; font-weight:900; font-size:0.65rem; background:rgba(46,125,50,0.08); padding:3px 8px; border-radius:4px; border:1px solid rgba(46,125,50,0.15);">SAVED</span>')}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        })()}
+     </div>
+    `;
+}
+
+// ══════════════════════════════════════════════════════
+// ELECTOR STATS PAGE
+// ══════════════════════════════════════════════════════
+function renderElectorStats() {
+  const es = TN_DATA.electorStats;
+
+  mkChart('electorGenderChart', {
+    type: 'doughnut',
+    data: {
+      labels: ['Male', 'Female', 'Third Gender'],
+      datasets: [{ data: [es.male, es.female, es.thirdGender], backgroundColor: ['#1565C0', '#C2185B', '#6A1B9A'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      cutout: '65%',
+      layout: { padding: { left: 40, right: 40, top: 10, bottom: 10 } },
+      plugins: { tooltip: { callbacks: { label: c => ` ${c.label}: ${fmtLacs(c.parsed)} ` } } }
+    }
+  });
+
+  mkChart('electorAgeChart', {
+    type: 'bar',
+    data: {
+      labels: ['18–19', '20–29', '30–39', '40–49', '50–59', '60–69', '70–79', '80+'],
+      datasets: [{
+        data: [1459039, 10718457, 11613490, 11900243, 10383934, 6769737, 3435639, 1062752],
+        backgroundColor: ['#E3F2FD', '#BBDEFB', '#90CAF9', '#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1565C0']
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { grid: { display: false } }, y: { ticks: { callback: v => fmtLacs(v) }, grid: { color: 'rgba(0,0,0,.05)' } } }
+    }
+  });
+
+
+
+  // District table
+  renderDistrictTable();
+}
+
+window.sortDistrictColumn = 'districtNo';
+window.sortDistrictAsc = true;
+
+window.renderDistrictTable = function () {
+  const tbl = document.getElementById('districtTable');
+  if (!tbl) return;
+
+  const data = [...TN_DATA.districts].sort((a, b) => {
+    let v1, v2;
+    if (window.sortDistrictColumn === 'femalePct') {
+      v1 = a.female / a.electors;
+      v2 = b.female / b.electors;
+    } else {
+      v1 = a[window.sortDistrictColumn];
+      v2 = b[window.sortDistrictColumn];
+    }
+
+    if (typeof v1 === 'string') {
+      const res = v1.localeCompare(v2);
+      return window.sortDistrictAsc ? res : -res;
+    }
+    return window.sortDistrictAsc ? v1 - v2 : v2 - v1;
+  });
+
+  const arrow = window.sortDistrictAsc ? ' ↑' : ' ↓';
+
+  tbl.innerHTML = `
+    <thead>
+      <tr style="cursor:pointer; user-select:none;">
+        <th class="clickable" data-trigger="toggleDistrictSort" data-arg="districtNo" style="text-align:center; width: 60px;">No.${window.sortDistrictColumn === 'districtNo' ? arrow : ''}</th>
+        <th class="clickable" data-trigger="toggleDistrictSort" data-arg="name">District${window.sortDistrictColumn === 'name' ? arrow : ''}</th>
+        <th class="clickable" data-trigger="toggleDistrictSort" data-arg="constituencies" style="text-align:center;">ACs${window.sortDistrictColumn === 'constituencies' ? arrow : ''}</th>
+        <th class="clickable" data-trigger="toggleDistrictSort" data-arg="electors">Total Electors${window.sortDistrictColumn === 'electors' ? arrow : ''}</th>
+        <th class="clickable" data-trigger="toggleDistrictSort" data-arg="male" style="background:rgba(21,101,192,0.08); color:#1565C0;">Male${window.sortDistrictColumn === 'male' ? arrow : ''}</th>
+        <th class="clickable" data-trigger="toggleDistrictSort" data-arg="female" style="background:rgba(194,24,91,0.08); color:#C2185B;">Female${window.sortDistrictColumn === 'female' ? arrow : ''}</th>
+        <th class="clickable" data-trigger="toggleDistrictSort" data-arg="thirdGender" style="background:rgba(106,27,154,0.08); color:#6A1B9A;">Third Gender${window.sortDistrictColumn === 'thirdGender' ? arrow : ''}</th>
+      </tr>
+    </thead>
+    <tbody>${data.map((d, i) => {
+    const acs = TN_DATA.constituencies.filter(c => c.district === d.name);
+    const subRows = acs.map(c => `
+      <tr class="acc-${i} clickable hover-surface" style="display:none; background: var(--surface-alt); border-bottom: 1px solid var(--border); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" class="acc-${i} clickable hover-surface dark-surface-alt" data-trigger="openConstituency" data-id="${c.id}" title="View Constituency Details">
+        <td style="background:var(--surface-alt); opacity:0.5;"></td>
+        <td style="padding-left: 2.5rem; font-weight:600; color:var(--text); position:relative;">
+          <span style="position:absolute; left:1.1rem; top:50%; transform:translateY(-50%); color:var(--text-3); opacity:0.5;">└</span>${c.name}
+        </td>
+        <td style="text-align:center; color:var(--text-3); font-size: 0.75rem; font-weight:700;">AC-${c.id}</td>
+        <td class="mono">${fmtNum(c.electors)}</td>
+        <td class="mono" style="background:rgba(21,101,192,0.02); color:#1565C0;">${fmtNum(c.male)}</td>
+        <td class="mono" style="background:rgba(194,24,91,0.02); color:#C2185B;">${fmtNum(c.female)}</td>
+        <td class="mono" style="background:rgba(106,27,154,0.02); color:#6A1B9A;">${fmtNum(c.thirdGender !== undefined ? c.thirdGender : (c.electors - c.male - c.female))}</td>
+      </tr>
+      `).join('');
+
+    return `
+      <tr data-trigger="toggleDistrict" data-index="${i}" class="clickable hover-surface" style="transition: background 0.2s;">
+        <td style="text-align:center; font-weight:700; color:var(--text-3); font-size:0.8rem;">${d.districtNo}</td>
+        <td style="font-weight:600;">
+          <span class="acc-icon" style="font-size:0.6rem; color:var(--text-3); width:12px; display:inline-block; text-align:center; margin-right:0.6rem; vertical-align:middle; position:relative; top:-1px;">▶</span>${d.name}
+        </td>
+        <td style="text-align:center;">${d.constituencies}</td>
+        <td class="mono" style="font-weight: 500;">${fmtNum(d.electors)}</td>
+        <td class="mono" style="background:rgba(21,101,192,0.06); color:#1565C0; font-weight:500;">${fmtNum(d.male)}</td>
+        <td class="mono" style="background:rgba(194,24,91,0.06); color:#C2185B; font-weight:500;">${fmtNum(d.female)}</td>
+        <td class="mono" style="background:rgba(106,27,154,0.06); color:#6A1B9A; font-weight:500;">${fmtNum(d.thirdGender)}</td>
+      </tr>
+      ${subRows}`;
+  }).join('')}
+    </tbody>
+    <tfoot style="background: var(--surface-alt); font-weight: 700; border-top: 2px solid var(--border);">
+      <tr>
+        <td colspan="2" style="text-align: right; padding-right: 2rem;">STATE TOTAL</td>
+        <td style="text-align: center;">234</td>
+        <td class="mono">${fmtNum(TN_DATA.electorStats.total)}</td>
+        <td class="mono" style="color:#1565C0;">${fmtNum(TN_DATA.electorStats.male)}</td>
+        <td class="mono" style="color:#C2185B;">${fmtNum(TN_DATA.electorStats.female)}</td>
+        <td class="mono" style="color:#6A1B9A;">${fmtNum(TN_DATA.electorStats.thirdGender)}</td>
+      </tr>
+    </tfoot>`;
+};
+
+window.toggleDistrictSort = function (col) {
+  if (window.sortDistrictColumn === col) {
+    window.sortDistrictAsc = !window.sortDistrictAsc;
+  } else {
+    window.sortDistrictColumn = col;
+    window.sortDistrictAsc = true;
+  }
+  renderDistrictTable();
+};
+
+// ══════════════════════════════════════════════════════
+// GENDER PARTICIPATION PAGE
+// ══════════════════════════════════════════════════════
+
+
+/**
+ * Renders and reorders the live results banner based on seat counts or alphabet.
+ */
+window.renderLiveResultsBanner = function () {
+  const container = document.querySelector('.banner-grid');
+  if (!container) return;
+
+  // 1. Define base data for alliances
+  const allianceData = [
+    { id: 'SPA', name: 'DMK', color: '#E53935', resultKey: 'SPA-DMK+' },
+    { id: 'NDA', name: 'ADMK', color: '#43A047', resultKey: 'NDA-ADMK+' },
+    { id: 'TVK', name: 'TVK', color: '#A67C00', resultKey: 'TVK' },
+    { id: 'NTK', name: 'NTK', color: '#b31818', resultKey: 'NTK' },
+    { id: 'OTH', name: 'OTH', color: '#607D8B', resultKey: 'OTHERS' }
+  ];
+
+  // 2. Extract counts from global RESULTS_2026_DRAFT if available
+  let results = {};
+  if (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.summary && RESULTS_2026_DRAFT.summary.alliance_results) {
+    results = RESULTS_2026_DRAFT.summary.alliance_results;
+  }
+
+  allianceData.forEach(a => {
+    const data = results[a.resultKey] || { leads: 0, won: 0 };
+    a.leads = data.leads;
+    a.won = data.won;
+    a.total = a.leads + a.won;
+  });
+
+  const totalSeatsInPlay = allianceData.reduce((sum, a) => sum + a.total, 0);
+  const totalWonCount = allianceData.reduce((sum, a) => sum + a.won, 0);
+  const totalLeadingCount = allianceData.reduce((sum, a) => sum + a.leads, 0);
+
+  // 3. Sorting Logic: Sort by total count (won + leads) descending
+  allianceData.sort((a, b) => {
+    if (b.total !== a.total) return b.total - a.total;
+    if (b.won !== a.won) return b.won - a.won;
+    return a.name.localeCompare(b.name);
+  });
+
+  // 4. Filter out alliances with no seats, then update the DOM
+  const visibleAlliances = allianceData.filter(a => a.total > 0);
+  container.innerHTML = visibleAlliances.map(a => {
+    // Get party breakdown for this alliance
+    const allianceId = a.id.toLowerCase();
+    const allianceParties = TN_PARTIES.filter(p => {
+        if (allianceId === 'oth') {
+            return !['spa', 'nda', 'tvk', 'ntk'].includes(p.alliance);
+        }
+        return p.alliance === allianceId;
+    });
+
+    const partyResults = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.summary) 
+                        ? RESULTS_2026_DRAFT.summary.party_results 
+                        : {};
+
+    const breakdownHtml = allianceParties.map(p => {
+        const pData = partyResults[p.code] || { won: 0 };
+        if (pData.won === 0) return '';
+        return `
+            <div style="display:flex; align-items:center; gap:6px; font-family: var(--font-mono); font-size: 0.9rem;">
+                <img src="${p.icon || partyIcon(p.code)}" style="width:16px; height:16px; object-fit:contain; flex-shrink:0;" onerror="this.style.display='none'">
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.code}: <b style="font-weight:900; color:var(--text);">${pData.won}</b></span>
+            </div>
+        `;
+    }).filter(x => x).join('');
+
+    return `
+      <div class="banner-item" style="border: 1px solid ${a.color}50; background: ${a.color}05;">
+        <div class="banner-item-label" style="background: ${a.color};">${a.name}${a.id === 'SPA' || a.id === 'NDA' ? '<sup style="font-size: 0.8rem;">+</sup>' : ''}</div>
+        <div class="banner-item-value" id="bannerRes${a.id}" style="background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem 0;">
+          <span style="font-size: 2.4rem; font-weight: 900; color: ${a.color}; line-height: 1;" title="Seats Won">${a.won}</span>
+          <div style="font-size: 0.6rem; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; opacity: 0.7;">SEATS</div>
+          
+          ${breakdownHtml ? `
+            <div class="banner-separator" style="width: 85%; border-top: 1px solid ${a.color}30; margin: 4px 0; display: none;"></div>
+            
+            <div class="mobile-collapse-toggle" onclick="const card = this.closest('.banner-item'); const grid = card.querySelector('.banner-party-grid'); const sep = card.querySelector('.banner-separator'); const isExp = grid.classList.toggle('expanded'); sep.style.display = isExp ? 'block' : 'none'; grid.style.display = isExp ? 'grid' : 'none'; this.querySelector('.toggle-icon').classList.toggle('rotated');" 
+                 style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 10px 0 5px 0; width: 100%; user-select: none;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: ${a.color}; text-transform: uppercase; letter-spacing: 0.08em;">Party Breakdown</span>
+                <span class="iconify toggle-icon" data-icon="carbon:chevron-down" style="font-size: 0.9rem; color: ${a.color}; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);"></span>
+            </div>
+
+            <div class="banner-party-grid" style="width: 90%; padding: 0 5px; overflow: hidden; display: none;">
+                ${breakdownHtml}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const leadCountEl = document.getElementById('leadCountText');
+  if (leadCountEl) {
+    const lastUpdate = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.last_updated) ? RESULTS_2026_DRAFT.last_updated : (typeof DEPLOY_META !== 'undefined' ? DEPLOY_META.deployedAt : new Date());
+    const date = new Date(lastUpdate);
+    const formatted = date.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).replace(' at ', ', ');
+    
+    leadCountEl.innerHTML = `<span style="font-weight: 800; color: #43A047;">${totalWonCount}</span> / 234 Seats Declared`;
+  }
+};
+
+// ══════════════════════════════════════════════════════
+// RESULTS PAGE
+// ══════════════════════════════════════════════════════
+window.renderResultsKPIs = function () {
+  const grid = document.getElementById('resultsKpiGrid');
+  if (!grid) return;
+
+  const resultsDraft = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results)
+                      ? RESULTS_2026_DRAFT.constituency_results
+                      : {};
+
+  let maxMargin = -1;
+  let maxWinner = null;
+  let maxAcId = null;
+
+  let minMargin = Infinity;
+  let minWinner = null;
+  let minAcId = null;
+
+  let tvkCount = 0;
+  let spaCount = 0;
+  let ndaCount = 0;
+  let ntkCount = 0;
+  let othersCount = 0;
+
+  const allianceMap = {
+    'TVK':'TVK','DMK':'SPA-DMK+','INC':'SPA-DMK+','VCK':'SPA-DMK+','CPI':'SPA-DMK+',
+    'CPI(M)':'SPA-DMK+','CPIM':'SPA-DMK+','IUML':'SPA-DMK+','MDMK':'SPA-DMK+','DMDK':'SPA-DMK+',
+    'ADMK':'NDA-ADMK+','PMK':'NDA-ADMK+','BJP':'NDA-ADMK+','AMMK':'NDA-ADMK+',
+    'NTK':'NTK','MNM':'MNM'
+  };
+
+  for (const acId in resultsDraft) {
+    const res = resultsDraft[acId];
+    if (res && res.isWon) {
+      const margin = Number(res.margin);
+      const party = res.party;
+      const alliance = allianceMap[party] || 'Others';
+
+      // Counts for majority status
+      if (alliance === 'TVK') tvkCount++;
+      else if (alliance === 'SPA-DMK+') spaCount++;
+      else if (alliance === 'NDA-ADMK+') ndaCount++;
+      else if (alliance === 'NTK') ntkCount++;
+      else othersCount++;
+
+      if (!isNaN(margin)) {
+        if (margin > maxMargin) {
+          maxMargin = margin;
+          maxWinner = res;
+          maxAcId = acId;
+        }
+        if (margin < minMargin && margin > 0) {
+          minMargin = margin;
+          minWinner = res;
+          minAcId = acId;
+        }
+      }
+    }
+  }
+
+  // Get constituency names from TN_DATA
+  const getAcName = (id) => {
+    if (typeof TN_DATA !== 'undefined' && TN_DATA.constituencies) {
+      const found = TN_DATA.constituencies.find(c => c.id === Number(id));
+      return found ? found.name : `AC ${id}`;
+    }
+    return `AC ${id}`;
+  };
+
+  const maxWinnerAcName = maxWinner ? getAcName(maxAcId) : '';
+  const minWinnerAcName = minWinner ? getAcName(minAcId) : '';
+
+  // Format candidate names beautifully
+  const formatName = (name) => {
+    if (!name || name === '—') return '—';
+    return name.split(' ')
+               .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+               .join(' ');
+  };
+
+  // Determine majority status text
+  let majorityVal = "Hung Assembly";
+  let majoritySub = `<b>TVK</b> won <b>108 seats</b>, 10 short of the 118 majority mark.`;
+  const alliances = [
+    { name: 'TVK', count: tvkCount },
+    { name: 'SPA-DMK+', count: spaCount },
+    { name: 'NDA-ADMK+', count: ndaCount }
+  ];
+  alliances.sort((a, b) => b.count - a.count);
+  const leading = alliances[0];
+
+  if (leading.count >= 118) {
+    majorityVal = `${leading.name} Wins`;
+    majoritySub = `<b>${leading.name}</b> secured a clear majority with <b>${leading.count} seats</b>.`;
+  } else {
+    majorityVal = "Hung Assembly";
+    const short = 118 - leading.count;
+    majoritySub = `<b>${leading.name}</b> is the single largest group with <b>${leading.count} seats</b>, <b>${short} short</b> of majority.`;
+  }
+
+  // Render the grid HTML
+  grid.innerHTML = `
+    <!-- Card 1: Highest Margin -->
+    <div class="tcard tcard-mostwin">
+      <div class="tcard-header">
+        <span class="tcard-label">Highest Margin</span>
+        <div class="tcard-icon-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        </div>
+      </div>
+      <div class="tcard-value">${maxWinner ? maxMargin.toLocaleString('en-IN') : '98,110'}</div>
+      <div class="tcard-subtext">
+        <b>${maxWinner ? formatName(maxWinner.candidate) : 'K. Edappadi Palaniswami'}</b> (${maxWinner ? maxWinner.party : 'ADMK'}) won in <b>${maxWinnerAcName || 'Edappadi'}</b> with the highest victory margin.
+      </div>
+      <div class="tcard-footer">
+        <span class="iconify" data-icon="carbon:user"></span>
+        <span>${maxWinner ? maxWinner.party : 'ADMK'} Candidate</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Majority Status -->
+    <div class="tcard tcard-majority">
+      <div class="tcard-header">
+        <span class="tcard-label">Majority Status</span>
+        <div class="tcard-icon-wrapper">
+          <span class="iconify" data-icon="carbon:rule"></span>
+        </div>
+      </div>
+      <div class="tcard-value">${majorityVal}</div>
+      <div class="tcard-subtext">
+        ${majoritySub}
+      </div>
+      <div class="tcard-footer">
+        <span class="iconify" data-icon="carbon:checkmark-outline"></span>
+        <span>Total: 234 Seats</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Deposit Losses -->
+    <div class="tcard tcard-deposit">
+      <div class="tcard-header">
+        <span class="tcard-label">Deposit Losses</span>
+        <div class="tcard-icon-wrapper">
+          <span class="iconify" data-icon="carbon:percentage"></span>
+        </div>
+      </div>
+      <div class="tcard-value">3,586</div>
+      <div class="tcard-subtext">
+        <b>84.24%</b> of the 4,257 total contesting candidates failed to secure 16.67% of valid polled votes and lost their deposit.
+      </div>
+      <div class="tcard-footer">
+        <span class="iconify" data-icon="carbon:warning-alt"></span>
+        <span>84.24% of all contestants</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Closest Contest -->
+    <div class="tcard tcard-closest">
+      <div class="tcard-header">
+        <span class="tcard-label">Closest Contest</span>
+        <div class="tcard-icon-wrapper">
+          <span class="iconify" data-icon="carbon:arrows-horizontal"></span>
+        </div>
+      </div>
+      <div class="tcard-value">${minWinner ? minMargin.toLocaleString('en-IN') + (minMargin === 1 ? ' Vote' : ' Votes') : '1 Vote'}</div>
+      <div class="tcard-subtext">
+        <b>${minWinner ? formatName(minWinner.candidate) : 'R. Seenivasa Sethupathy'}</b> (${minWinner ? minWinner.party : 'TVK'}) won in <b>${minWinnerAcName || 'Tiruppattur'}</b> by a razor-thin margin!
+      </div>
+      <div class="tcard-footer">
+        <span class="iconify" data-icon="carbon:help-outline"></span>
+        <span>Narrowest Margin</span>
+      </div>
+    </div>
+  `;
+};
+
+function renderResults() {
+  const rsContent = document.getElementById('resultsContent');
+  const rsEmpty = document.getElementById('resultsEmptyState');
+
+  // Call the live banner renderer
+  window.renderLiveResultsBanner();
+  
+  // Render consolidated charts
+  renderResultsCharts();
+
+  // Render KPI cards
+  window.renderResultsKPIs();
+
+  if (rsContent) rsContent.style.display = 'block';
+  if (rsEmpty) rsEmpty.style.display = 'none';
+
+  // Render the alliance group breakdown
+
+  // Render District Wise results
+  if (window.renderDistrictWiseResults) window.renderDistrictWiseResults();
+
+  // Render Party Performance Summary
+  if (window.renderPartyPerformanceTable) window.renderPartyPerformanceTable();
+
+  // Render Full Results Table
+  if (window.renderResultsFullTable) window.renderResultsFullTable();
+}
+
+// Renders the alliance group breakdown with party-wise leads.
+window.renderPageResultsChart = function () {
+  const toggle = document.getElementById('pageResultsToggle');
+  if (!toggle || !TN_DATA.results) return;
+  const isAlliance = toggle.value === 'alliance';
+
+  let labels = [];
+  let data = [];
+  let colors = [];
+
+  if (isAlliance) {
+    let allianceWins = {};
+    TN_DATA.results.forEach(r => allianceWins[r.alliance] = (allianceWins[r.alliance] || 0) + 1);
+    const sorted = Object.keys(allianceWins).map(k => ({ alliance: k, wins: allianceWins[k] })).sort((a, b) => b.wins - a.wins);
+
+    sorted.forEach((item) => {
+      const aData = TN_DATA.alliances.find(a => a.id === item.alliance);
+      labels.push(aData ? aData.name : item.alliance);
+      data.push(item.wins);
+      colors.push(aData ? aData.color : partyColor(item.alliance));
+    });
+  } else {
+    // Party wise
+    let partyWins = {};
+    TN_DATA.results.forEach(r => {
+      const code = getPartyCode(r.party);
+      partyWins[code] = (partyWins[code] || 0) + 1;
+    });
+    const sorted = Object.keys(partyWins).map(k => ({ party: k, wins: partyWins[k] })).sort((a, b) => b.wins - a.wins);
+
+    sorted.forEach((item) => {
+      const pData = TN_DATA.parties.find(p => p.code === item.party);
+      labels.push(getPartyName(item.party));
+      data.push(item.wins);
+      colors.push(pData ? pData.color : partyColor(item.party));
+    });
+  }
+
+  mkChart('pageResultsChart', {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { left: 40, right: 40, top: 10, bottom: 10 } },
+      cutout: '50%',
+      circumference: 180,
+      rotation: -90,
+      plugins: { tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} seats` } } }
+    }
+  });
+
+  // Legend is natively handled at bottom
+}
+
+// ══════════════════════════════════════════════════════
+// INSIGHTS PAGE
+// ══════════════════════════════════════════════════════
+
+
+// ══════════════════════════════════════════════════════
+
+
+// ── Initial render: restore page from URL hash ─────────
+// ── Initial render: detect active page from DOM ─────────
+// ── Initial render: detect active page from DOM ─────────
+document.addEventListener('DOMContentLoaded', () => {
+  const activePage = document.querySelector('.page-content.active');
+  if (!activePage) return;
+
+  const pageId = activePage.id.replace('page-', '');
+
+  // Set breadcrumb
+  const bc = document.getElementById('topbarBreadcrumb');
+  if (bc) {
+    bc.innerHTML = `<a href="index.html" style="text-decoration:none; color:inherit; transition:color .2s;" class="hover-primary-text">Election 2026</a> <span style="margin:0 .4rem;color:var(--border);font-size:.7rem;">/</span> <span style="color:var(--accent);">${pageTitles[pageId] || pageId}</span>`;
+  }
+
+  // Poll for data availability before rendering
+  const waitAndRender = () => {
+    const hasData = (typeof TN_DATA !== 'undefined');
+    const isElectorReady = (hasData && TN_DATA.electorStats);
+    const isResultsReady = (typeof RESULTS_2026_DRAFT !== 'undefined');
+    
+    // Results and Districts pages only need Elector and Results data
+    if (pageId === 'results' || pageId === 'districts') {
+      if (isElectorReady && isResultsReady) {
+        renderPage(pageId);
+        renderFooter();
+      } else {
+        setTimeout(waitAndRender, 200);
+      }
+      return;
+    }
+
+    // Other pages might need heavy candidate data
+    const isCandidateReady = (hasData && TN_DATA.candidates && TN_DATA.candidates.length > 0);
+    if (isCandidateReady && isElectorReady) {
+      renderPage(pageId);
+      renderFooter();
+    } else {
+      setTimeout(waitAndRender, 200);
+    }
+  };
+
+  waitAndRender();
+});
+
+function renderResultsCharts() {
+    // Orchestrator disabled as charts were removed from UI
+    return;
+}
+
+
+
+function renderAllianceBarChart() {
+    const container = document.getElementById('allianceBarChart');
+    if (!container) return;
+
+    const res = RESULTS_2026_DRAFT.summary.alliance_results;
+    const data = [
+        { name: 'DMK+', count: (res["SPA-DMK+"].leads + res["SPA-DMK+"].won), color: '#E53935' },
+        { name: 'ADMK+', count: (res["NDA-ADMK+"].leads + res["NDA-ADMK+"].won), color: '#43A047' },
+        { name: 'TVK', count: (res["TVK"].leads + res["TVK"].won), color: '#A67C00' },
+        { name: 'NTK', count: (res["NTK"].leads + res["NTK"].won), color: '#b31818' },
+        { name: 'OTH', count: (res["OTHERS"].leads + res["OTHERS"].won), color: '#607D8B' }
+    ].filter(d => d.count > 0).sort((a,b) => b.count - a.count);
+
+    const options = {
+        series: [{ data: data.map(d => d.count) }],
+        chart: { type: 'bar', height: 250, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '60%', distributed: true } },
+        colors: data.map(d => d.color),
+        dataLabels: { enabled: true, formatter: (val) => val, style: { fontSize: '12px', fontWeight: 700 } },
+        xaxis: { categories: data.map(d => d.name), labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { style: { fontWeight: 600, colors: 'var(--text)' } } },
+        grid: { show: false },
+        legend: { show: false },
+        tooltip: { theme: 'dark' }
+    };
+
+    container.innerHTML = '';
+    new ApexCharts(container, options).render();
+}
+
+function renderPartyBarChart() {
+    const container = document.getElementById('partyBarChart');
+    if (!container) return;
+
+    const res = RESULTS_2026_DRAFT.summary.party_results;
+    const data = Object.entries(res)
+        .map(([name, counts]) => ({ name, count: (counts.leads + counts.won) }))
+        .filter(d => d.count > 0)
+        .sort((a,b) => b.count - a.count)
+        .slice(0, 8); // Show top 8 parties
+
+    const options = {
+        series: [{ data: data.map(d => d.count) }],
+        chart: { type: 'bar', height: 250, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '60%' } },
+        colors: ['#607D8B'],
+        dataLabels: { enabled: true, style: { fontSize: '11px' } },
+        xaxis: { categories: data.map(d => d.name), labels: { show: false }, axisBorder: { show: false } },
+        yaxis: { labels: { style: { fontSize: '11px', colors: 'var(--text)' } } },
+        grid: { show: false },
+        tooltip: { theme: 'dark' }
+    };
+
+    container.innerHTML = '';
+    new ApexCharts(container, options).render();
+}
+
+function renderFooter() {
+  const footerEl = document.getElementById('footerEl');
+  if (!footerEl) return;
+
+  footerEl.style.display = 'block';
+  footerEl.innerHTML = `
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0.85rem;">
+      <div style="display: flex; gap: 1.25rem; margin-bottom: 0.5rem; flex-wrap: wrap; justify-content: center;">
+        <!-- Instagram -->
+        <a href="https://instagram.com/data_dood" target="_blank" rel="noopener noreferrer" style="color: var(--text-2); transition: color 0.2s; display: flex;" class="hover-primary-text" aria-label="Instagram">
+          <svg style="width: 1.25rem; height: 1.25rem;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c.796 0 1.441.645 1.441 1.44s-.645 1.44-1.441 1.44c-.795 0-1.439-.645-1.439-1.44s.644-1.44 1.439-1.44z"/></svg>
+        </a>
+        <!-- YouTube -->
+        <a href="https://youtube.com/@data_dood" target="_blank" rel="noopener noreferrer" style="color: var(--text-2); transition: color 0.2s; display: flex;" class="hover-primary-text" aria-label="YouTube">
+          <svg style="width: 1.25rem; height: 1.25rem;" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
+        <!-- Twitter/X -->
+        <a href="https://twitter.com/data_dood" target="_blank" rel="noopener noreferrer" style="color: var(--text-2); transition: color 0.2s; display: flex;" class="hover-primary-text" aria-label="Twitter">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-3);">
+        &copy; ${new Date().getFullYear()} datadoodle. All rights reserved.
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-2); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">
+        With love from <img src="${getAssetUrl('assets/brand/Logo.svg')}" alt="DATAdoodle Logo" style="height: 12px; width: auto;">
+      </div>
+      <div style="margin-top: 0.5rem;">
+        <button id="refreshSiteButton" class="clickable" style="background: var(--surface-alt); border: 1px solid var(--border); color: var(--text-2); padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; transition: all 0.2s;">
+          REFRESH SITE FOR UPDATES
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Attach direct listener to ensure functionality (bypassing potentially broken app.js delegation)
+  setTimeout(() => {
+    const btn = document.getElementById('refreshSiteButton');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (typeof window.clearSiteCache === 'function') {
+          window.clearSiteCache();
+        }
+      });
+    }
+  }, 100);
+}
+
+// Global Cache Cleaner
+window.clearSiteCache = function () {
+  if (confirm('Clear local cache and refresh to see latest updates?')) {
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (let name of names) caches.delete(name);
+      });
+    }
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    }
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload(true);
+  }
+}
+
+window.renderAllianceExplorer = function (allianceId) {
+  const alliance = (TN_DATA.alliances || []).find(a => a.id === allianceId);
+  if (!alliance) return;
+
+  const pageTitle = document.getElementById('alliancePageTitle');
+  const pageSub = document.getElementById('alliancePageSub');
+  if (pageTitle) pageTitle.textContent = `${alliance.name} Candidates Explorer`;
+  if (pageSub) pageSub.innerHTML = `Full list of <b>${alliance.seatsContested}</b> candidates contesting under the ${alliance.name} alliance across Tamil Nadu.`;
+
+  const candidates = (typeof TN_CANDIDATES !== 'undefined' ? TN_CANDIDATES : []).filter(c => c.alliance === alliance.id);
+  const distSelect = document.getElementById('allianceDistFilter');
+  const partySelect = document.getElementById('alliancePartyFilter');
+  const searchInput = document.getElementById('allianceCandSearch');
+  const tableBody = document.getElementById('allianceCandBody');
+
+  if (!tableBody) return;
+
+  // Populate filter options
+  const districts = [...new Set(candidates.map(c => c.district))].sort();
+  districts.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    distSelect.appendChild(opt);
+  });
+
+  const parties = [...new Set(candidates.map(c => getPartyCode(c.party)))].sort();
+  parties.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    partySelect.appendChild(opt);
+  });
+
+  const renderTable = () => {
+    const query = (searchInput.value || "").toLowerCase();
+    const distFilter = distSelect.value;
+    const partyFilter = partySelect.value;
+
+    const filtered = candidates.filter(c => {
+      const matchSearch = (c.name || "").toLowerCase().includes(query) ||
+        (candConst(c) || "").toLowerCase().includes(query) ||
+        (getPartyName(c.party) || "").toLowerCase().includes(query) || (getPartyCode(c.party) || "").toLowerCase().includes(query);
+      const matchDist = distFilter === 'all' || c.district === distFilter;
+      const matchParty = partyFilter === 'all' || getPartyCode(c.party) === partyFilter;
+      return matchSearch && matchDist && matchParty;
+    });
+
+    if (filtered.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem; color:var(--text-3); font-style:italic;">No candidates found matching your criteria.</td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = filtered.map(c => {
+      const constInfo = TN_DATA.constituencies.find(ac => ac.id === c.acNo);
+      return `
+        <tr class="hover-surface" style="font-size: 0.875rem;">
+          <td data-label="AC No." data-trigger="openConstituency" data-id="${c.acNo || (constInfo ? constInfo.id : '')}" class="clickable" style="text-align:center; font-weight:700; color:var(--text-3); font-family:var(--font-mono);">${c.acNo || (constInfo ? constInfo.id : '-')}</td>
+          <td data-label="Constituency" data-trigger="openConstituency" data-id="${c.acNo || (constInfo ? constInfo.id : '')}" class="clickable" style="font-weight:700; color:var(--accent-2);">${candConst(c)}</td>
+          <td data-label="Party">
+            <span class="badge" style="background:${alliance.color}15; color:${alliance.color}; border:1px solid ${alliance.color}30;">${renderPartyCode(c.party)}</span>
+          </td>
+          <td data-label="G" style="text-align:center;">
+             ${renderGenderVisual(c.gender) ? `<div style="${getGenderStyle(c.gender)} width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">${renderGenderVisual(c.gender)}</div>` : '-'}
+          </td>
+          <td data-label="Candidate" data-trigger="openCandModal" data-id="${c.id}" class="clickable" style="font-weight:700;">
+            <span style="${getGenderStyle(c.gender)} text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px;">${c.name}</span>
+          </td>
+          <td data-label="Age" style="color:var(--text-2); font-weight:500;">${c.age || '-'}</td>
+          <td data-label="Education" style="color:var(--text-2); font-weight:500;">${c.education || '-'}</td>
+          <td data-label="District" style="color:var(--text-2); font-weight:500;">${c.district}</td>
+        </tr>
+      `;
+    }).join('');
+
+  };
+
+  searchInput.addEventListener('input', renderTable);
+  distSelect.addEventListener('change', renderTable);
+  partySelect.addEventListener('change', renderTable);
+  renderTable();
+};
+
+/* ── Generic Table Sorting ───────────────────────── */
+document.addEventListener('click', e => {
+  const th = e.target.closest('.data-table th');
+  if (!th || th.closest('.manifesto-table')) return;
+
+  const table = th.closest('table');
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const columnIndex = Array.from(th.parentNode.children).indexOf(th);
+  const isAscending = th.dataset.sortDir !== 'asc';
+
+  // Reset other headers
+  table.querySelectorAll('th').forEach(h => {
+    if (h !== th) {
+      delete h.dataset.sortDir;
+      h.classList.remove('sort-asc', 'sort-desc');
+    }
+  });
+
+  th.dataset.sortDir = isAscending ? 'asc' : 'desc';
+  th.classList.toggle('sort-asc', isAscending);
+  th.classList.toggle('sort-desc', !isAscending);
+
+  const getVal = (row) => row.children[columnIndex].innerText || row.children[columnIndex].textContent;
+
+  rows.sort((a, b) => {
+    const valA = getVal(a).trim();
+    const valB = getVal(b).trim();
+
+    // Check if numeric (stripping non-numeric prefixes like 'AC: ')
+    const stripNonNumeric = (s) => s.replace(/,/g, '').replace(/[^-0-9.]/g, '');
+    const numA = parseFloat(stripNonNumeric(valA));
+    const numB = parseFloat(stripNonNumeric(valB));
+
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return isAscending ? numA - numB : numB - numA;
+    }
+
+    return isAscending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+  });
+
+  tbody.innerHTML = '';
+  rows.forEach(row => tbody.appendChild(row));
+});
+
+
+
+/**
+ * Renders the full constituency results table with search.
+ */
+window.renderResultsFullTable = function () {
+    const tbl = document.getElementById('resultsFullTable');
+    if (!tbl) return;
+
+    const searchInput = document.getElementById('resultsTableSearch');
+    const distFilter = document.getElementById('resultsDistrictFilter');
+    const partyFilter = document.getElementById('resultsPartyFilter');
+    const allianceFilter = document.getElementById('resultsAllianceFilter');
+
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selDist = distFilter ? distFilter.value : '';
+    const selParty = partyFilter ? partyFilter.value : '';
+    const selAlliance = allianceFilter ? allianceFilter.value : '';
+
+    const resultsDraft = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results) 
+                        ? RESULTS_2026_DRAFT.constituency_results 
+                        : {};
+
+    const allianceMap = {
+      'TVK':'TVK','DMK':'DMK+','INC':'DMK+','VCK':'DMK+','CPI':'DMK+',
+      'CPIM':'DMK+','IUML':'DMK+','MDMK':'DMK+','DMDK':'DMK+',
+      'ADMK':'ADMK+','PMK':'ADMK+','BJP':'ADMK+','AMMK':'ADMK+',
+      'NTK':'NTK','MNM':'MNM'
+    };
+
+    // 1. Populate Dropdowns if not done
+    if (distFilter && distFilter.options.length <= 1) {
+      const districts = [...new Set(TN_DATA.constituencies.map(c => c.district))].sort();
+      districts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d; opt.textContent = d;
+        distFilter.appendChild(opt);
+      });
+    }
+    if (partyFilter && partyFilter.options.length <= 1) {
+      const parties = [...new Set(Object.values(resultsDraft).map(r => r.party).filter(p => p && p !== '—'))].sort();
+      parties.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p; opt.textContent = p;
+        partyFilter.appendChild(opt);
+      });
+    }
+
+    // 2. Add Listeners
+    [searchInput, distFilter, partyFilter, allianceFilter].forEach(el => {
+      if (el && !el.dataset.listener) {
+        el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => window.renderResultsFullTable());
+        el.dataset.listener = "true";
+      }
+    });
+
+    // 3. Filter Data
+    const data = TN_DATA.constituencies.filter(c => {
+        const res = resultsDraft[c.id] || null;
+        const party = res ? res.party : '—';
+        const aName = party !== '—' ? (allianceMap[party] || 'Others') : '—';
+
+        const matchesSearch = c.name.toLowerCase().includes(query) || c.id.toString() === query;
+        const matchesDist = !selDist || c.district === selDist;
+        const matchesParty = !selParty || party === selParty;
+        const matchesAlliance = !selAlliance || aName === selAlliance;
+
+        return matchesSearch && matchesDist && matchesParty && matchesAlliance;
+    });
+
+    // 4. Render Summary Chips
+    const chipContainer = document.getElementById('resultsFilterChips');
+    if (chipContainer) {
+        const partyCounts = {};
+        data.forEach(c => {
+            const res = resultsDraft[c.id] || null;
+            const party = res ? res.party : '—';
+            if (party && party !== '—') {
+                partyCounts[party] = (partyCounts[party] || 0) + 1;
+            }
+        });
+
+        const sortedParties = Object.keys(partyCounts).sort((a, b) => partyCounts[b] - partyCounts[a]);
+        chipContainer.innerHTML = sortedParties.map(p => {
+            const color = partyColor(p);
+            return `
+                <div style="display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; background:${color}15; border:1px solid ${color}35; font-size:0.75rem; font-weight:800; color:${color};">
+                    <img src="${partyIcon(p)}" style="width:14px; height:14px; object-fit:contain;" onerror="this.style.display='none'">
+                    <span>${p}: ${partyCounts[p]}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    const allianceColorMap = {
+      'TVK':'#A67C00','DMK+':'#E53935','ADMK+':'#43A047','NTK':'#b31818','MNM':'#00838F'
+    };
+
+    tbl.innerHTML = `
+        <thead>
+            <tr>
+                <th style="width: 50px; text-align: center;">No.</th>
+                <th>Constituency</th>
+                <th style="text-align: left;">Elected Candidate</th>
+                <th style="text-align: center;">Party</th>
+                <th style="text-align: right;">Margin</th>
+                <th style="text-align: center;">Alliance</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${data.map(c => {
+                const res = resultsDraft[c.id] || null;
+                const party = res ? res.party : '—';
+                const candidate = res && res.candidate && res.candidate !== '—' ? res.candidate : '—';
+                const margin = res && res.margin && res.margin !== '—' ? Number(res.margin).toLocaleString('en-IN') : '—';
+                const partyColorStyle = party !== '—' ? `color: ${partyColor(party)}; font-weight: 800;` : '';
+                const aName = party !== '—' ? (allianceMap[party] || 'Others') : '—';
+                const allianceColor = allianceColorMap[aName] || 'var(--text-3)';
+                const allianceBadge = aName !== '—'
+                  ? `<span style="font-size:0.65rem; font-weight:800; padding:3px 10px; border-radius:20px; background:${allianceColor}18; color:${allianceColor}; border:1px solid ${allianceColor}35; white-space:nowrap;">${aName}</span>`
+                  : `<span style="color:var(--text-3);">—</span>`;
+
+                return `
+                    <tr class="clickable" data-trigger="openConstituency" data-id="${c.id}">
+                        <td style="text-align: center; color: var(--text-3); font-weight: 700;">${c.id}</td>
+                        <td>
+                            <div style="font-weight: 700;">${c.name}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-3); font-weight: 600;">${c.district}</div>
+                        </td>
+                        <td style="font-weight: 700; color: var(--text);">${candidate}</td>
+                        <td style="text-align: center;">
+                          <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
+                            ${party !== '—' ? `<img src="${partyIcon(party)}" style="width:18px; height:18px; object-fit:contain;" onerror="this.style.display='none'">` : ''}
+                            <span style="${partyColorStyle}">${party}</span>
+                          </div>
+                        </td>
+                        <td style="text-align: right; font-weight: 700; color: var(--text-2); font-family: var(--font-mono);">${margin}</td>
+                        <td style="text-align: center;">${allianceBadge}</td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-3);">No results found</td></tr>`}
+        </tbody>
+    `;
+};
+/**
+ * Renders the Won MLAs table.
+ */
+window.renderMLAs = function () {
+    const tbl = document.getElementById('mlaFullTable');
+    if (!tbl) return;
+
+    const searchInput = document.getElementById('mlaSearch');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    const resultsDraft = (typeof RESULTS_2026_DRAFT !== 'undefined' && RESULTS_2026_DRAFT.constituency_results) 
+                        ? RESULTS_2026_DRAFT.constituency_results 
+                        : {};
+
+    const allianceMap = {
+      'TVK':'TVK','DMK':'DMK+','INC':'DMK+','VCK':'DMK+','CPI':'DMK+',
+      'CPIM':'DMK+','IUML':'DMK+','MDMK':'DMK+','DMDK':'DMK+',
+      'ADMK':'ADMK+','PMK':'ADMK+','BJP':'ADMK+','AMMK':'ADMK+',
+      'NTK':'NTK','MNM':'MNM'
+    };
+
+    const allianceColorMap = {
+      'TVK':'#A67C00','DMK+':'#E53935','ADMK+':'#43A047','NTK':'#b31818','MNM':'#00838F'
+    };
+
+    // Filter to only include WON results
+    const data = TN_DATA.constituencies.filter(c => {
+        const res = resultsDraft[c.id] || null;
+        if (!res || !res.isWon) return false;
+
+        const matchesSearch = c.name.toLowerCase().includes(query) || 
+                              c.id.toString() === query || 
+                              res.candidate.toLowerCase().includes(query);
+        return matchesSearch;
+    });
+
+    // Summary Chips
+    const chipContainer = document.getElementById('mlaFilterChips');
+    if (chipContainer) {
+        const partyCounts = {};
+        data.forEach(c => {
+            const res = resultsDraft[c.id];
+            const party = res.party;
+            partyCounts[party] = (partyCounts[party] || 0) + 1;
+        });
+
+        const sortedParties = Object.keys(partyCounts).sort((a, b) => partyCounts[b] - partyCounts[a]);
+        chipContainer.innerHTML = sortedParties.map(p => {
+            const color = partyColor(p);
+            return `
+                <div style="display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; background:${color}15; border:1px solid ${color}35; font-size:0.75rem; font-weight:800; color:${color};">
+                    <img src="${partyIcon(p)}" style="width:14px; height:14px; object-fit:contain;" onerror="this.style.display='none'">
+                    <span>${p}: ${partyCounts[p]}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Add search listener
+    if (searchInput && !searchInput.dataset.listener) {
+        searchInput.addEventListener('input', () => window.renderMLAs());
+        searchInput.dataset.listener = "true";
+    }
+
+    tbl.innerHTML = `
+        <thead>
+            <tr>
+                <th style="width: 50px; text-align: center;">No.</th>
+                <th>Constituency</th>
+                <th style="text-align: left;">MLA Name</th>
+                <th style="text-align: center;">Party</th>
+                <th style="text-align: center;">Alliance</th>
+                <th style="text-align: right;">Margin</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${data.map(c => {
+                const res = resultsDraft[c.id];
+                const party = res.party;
+                const candidate = res.candidate;
+                const margin = Number(res.margin).toLocaleString('en-IN');
+                const aName = allianceMap[party] || 'Others';
+                const allianceColor = allianceColorMap[aName] || 'var(--text-3)';
+                const allianceBadge = `<span style="font-size:0.65rem; font-weight:800; padding:3px 10px; border-radius:20px; background:${allianceColor}18; color:${allianceColor}; border:1px solid ${allianceColor}35; white-space:nowrap;">${aName}</span>`;
+
+                return `
+                    <tr class="clickable" data-trigger="openConstituency" data-id="${c.id}">
+                        <td style="text-align: center; color: var(--text-3); font-weight: 700;">${c.id}</td>
+                        <td>
+                            <div style="font-weight: 700;">${c.name}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-3); font-weight: 600;">${c.district}</div>
+                        </td>
+                        <td style="font-weight: 800; color: var(--text);">${candidate}</td>
+                        <td style="text-align: center;">
+                          <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
+                            <img src="${partyIcon(party)}" style="width:20px; height:20px; object-fit:contain;" onerror="this.style.display='none'">
+                            <span style="color: ${partyColor(party)}; font-weight: 800;">${party}</span>
+                          </div>
+                        </td>
+                        <td style="text-align: center;">${allianceBadge}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--text-2); font-family: var(--font-mono);">${margin}</td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-3);">No MLAs found</td></tr>`}
+        </tbody>
+    `;
+};
+
+

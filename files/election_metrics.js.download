@@ -1,0 +1,50 @@
+// Helper: Normalize party input to code
+function getPartyCode(party) {
+  if (!party) return 'Independent';
+  if (typeof party === 'object' && party.code) return party.code;
+  if (typeof party === 'object') return 'Independent';
+  return party;
+}
+
+// Helper: Get full party name from code or object
+function getPartyName(party) {
+  const code = getPartyCode(party);
+  if (typeof party === 'object' && party.name) return party.name;
+
+  // 1. Check comprehensive lookup (generated from CSV)
+  if (typeof TN_PARTY_LOOKUP !== 'undefined' && TN_PARTY_LOOKUP[code]) {
+    return TN_PARTY_LOOKUP[code];
+  }
+  // 2. Fallback: TN_PARTIES metadata
+  if (typeof TN_PARTIES !== 'undefined') {
+    const found = TN_PARTIES.find(p => p.code === code || p.id === code.toLowerCase());
+    if (found) return found.name;
+  }
+  return code; // Fallback to code if name not found
+}
+
+// Helper: Render party code with full name on hover
+function renderPartyCode(party) {
+  if (!party) return '-';
+  const name = getPartyName(party);
+  let code = getPartyCode(party);
+  
+  // If code is same as name and it's long, produce an acronym
+  if (code === name && name.length > 8) {
+    code = name.split(/[\s-]+/).filter(x => x && x.length > 1).map(w => w[0]).join('').toUpperCase();
+    // If acronym is too short (e.g. 1 char), maybe just use first 3 letters
+    if (code.length < 2) code = name.slice(0, 3).toUpperCase();
+  }
+  
+  return `<span data-tooltip="${name}" style="cursor:default; border-bottom: 1px dotted var(--border);">${code}</span>`;
+}
+
+// Helper: Render alliance code with full name on hover
+function renderAllianceCode(allianceId) {
+  if (!allianceId) return '-';
+  const a = TN_ALLIANCES.find(x => x.id === allianceId.toLowerCase());
+  if (!a) return allianceId.toUpperCase();
+  return `<span data-tooltip="${a.name}" style="cursor: pointer;">${a.short || a.id.toUpperCase()}</span>`;
+}
+
+

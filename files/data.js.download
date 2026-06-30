@@ -1,0 +1,172 @@
+const TN_DISTRICT_NUMBERS = {
+    "Thiruvallur": 1, "Chennai": 2, "Kancheepuram": 3, "Vellore": 4, "Krishnagiri": 5,
+    "Dharmapuri": 6, "Tiruvannamalai": 7, "Viluppuram": 8, "Salem": 9, "Namakkal": 10,
+    "Erode": 11, "The Nilgiris": 12, "Coimbatore": 13, "Dindigul": 14, "Karur": 15,
+    "Tiruchirappalli": 16, "Perambalur": 17, "Cuddalore": 18, "Nagapattinam": 19, "Thiruvarur": 20,
+    "Thanjavur": 21, "Pudukkottai": 22, "Sivaganga": 23, "Madurai": 24, "Theni": 25,
+    "Virudhunagar": 26, "Ramanathapuram": 27, "Thoothukudi": 28, "Tirunelveli": 29, "Kanniyakumari": 30,
+    "Ariyalur": 31, "Tiruppur": 32, "Kallakurichi": 33, "Tenkasi": 34, "Chengalpattu": 35,
+    "Tirupathur": 36, "Ranipet": 37, "Mayiladuthurai": 38
+};
+
+// Dynamic District Aggregation
+const getDistricts = () => {
+    if (typeof TN_CONSTITUENCIES_234 === 'undefined') return [];
+    const map = {};
+    TN_CONSTITUENCIES_234.forEach(c => {
+        const third = c.thirdGender !== undefined ? c.thirdGender : (c.other !== undefined ? c.other : (c.electors - c.male - c.female));
+        if (!map[c.district]) map[c.district] = { 
+            name: c.district, 
+            districtNo: TN_DISTRICT_NUMBERS[c.district] || 0,
+            constituencies: 0, 
+            electors: 0, 
+            male: 0, 
+            female: 0, 
+            thirdGender: 0 
+        };
+        map[c.district].constituencies++;
+        map[c.district].electors += c.electors;
+        map[c.district].male += c.male;
+        map[c.district].female += c.female;
+        map[c.district].thirdGender += third;
+    });
+    return Object.values(map).sort((a, b) => a.districtNo - b.districtNo);
+};
+
+const getCands = (() => {
+    let all = [];
+    if (typeof TN_CANDIDATES !== 'undefined') {
+        all = TN_CANDIDATES;
+    } else {
+        // Dev Fallback: Auto-collect individual global variables
+        // 1. Try window iteration (works for 'var' declarations)
+        for (let key in window) {
+            if (key.startsWith('CANDIDATES_AC_') || key.startsWith('CANDIDATES_ALLIANCE_') || key.startsWith('CANDIDATES_INDEPENDENTS_AC_')) {
+                all = all.concat(window[key]);
+            }
+        }
+
+        // 2. Try manifest-based discovery (required for 'const' declarations)
+        if (all.length === 0 && typeof TN_DATA_MANIFEST !== 'undefined') {
+            TN_DATA_MANIFEST.forEach(path => {
+                const parts = path.split('/');
+                const filename = parts[parts.length - 1].replace('.js', '');
+                let varName = '';
+                
+                if (path.includes('/ac/')) {
+                    // Extract AC number from start of filename: 001_Slug.js -> 001
+                    const acMatch = filename.match(/^(\d+)/);
+                    if (acMatch) varName = 'CANDIDATES_AC_' + acMatch[1].padStart(3, '0');
+                } else if (path.includes('alliances/')) {
+                    varName = 'CANDIDATES_ALLIANCE_' + filename;
+                } else if (path.includes('independents/')) {
+                    varName = 'CANDIDATES_INDEPENDENTS_AC_' + filename;
+                }
+
+                if (varName) {
+                    try {
+                        // Use eval to access variables not on window object (const/let)
+                        const data = eval(varName);
+                        if (Array.isArray(data)) {
+                            // Deduplicate if already added via window iteration
+                            if (!all.some(arr => arr === data)) {
+                                all = all.concat(data);
+                            }
+                        }
+                    } catch (e) {
+                        // Variable not found or other error
+                    }
+                }
+            });
+        }
+    }
+    
+    // Final deduplication by id if any
+    const seenIds = new Set();
+    return all.filter(c => {
+        if (!c) return false;
+        if (c.id && seenIds.has(c.id)) return false;
+        if (c.id) seenIds.add(c.id);
+        
+        const p = getPartyCode(c.party);
+        return p && p.toString().trim() !== '';
+    });
+})();
+const namedCands = getCands.filter(c => c.name && c.name.trim() !== '');
+const wCands = namedCands.filter(c => c.gender === 'Female').length;
+const pCount = [...new Set(getCands.map(c => getPartyCode(c.party)))].length;
+
+
+const syncedParties = typeof TN_PARTIES !== 'undefined' ? TN_PARTIES : [];
+const syncedAlliances = typeof TN_ALLIANCES !== 'undefined' ? TN_ALLIANCES : [];
+
+const syncedConstituencies = typeof TN_CONSTITUENCIES_234 !== 'undefined' ? TN_CONSTITUENCIES_234 : [];
+
+if (getCands.length > 0) {
+    syncedParties.forEach(p => {
+        const pCands = namedCands.filter(c => {
+            const cp = getPartyCode(c.party).toUpperCase();
+            const cn = getPartyName(c.party).toUpperCase();
+            const targetCode = (p.code || '').toUpperCase();
+            const targetName = (p.name || '').toUpperCase();
+            const targetId = (p.id || '').toUpperCase();
+            return cp === targetCode || cp === targetId || cn === targetName;
+        });
+
+        p.candidates = pCands.length;
+        p.womenCandidates = pCands.filter(c => c.gender === 'Female').length;
+        p.maleCandidates = pCands.filter(c => c.gender === 'Male').length;
+    });
+
+    syncedConstituencies.forEach(c => {
+        const cCands = namedCands.filter(cand => cand.acNo === c.id);
+        c.candidates = cCands.length;
+        c.womenCandidates = cCands.filter(cand => cand.gender === 'Female').length;
+        c.maleCandidates = cCands.filter(cand => cand.gender === 'Male').length;
+    });
+}
+
+// Auto-sum party metrics into alliance totals so manual edits in metrics.js reflect correctly upwards.
+if (syncedAlliances.length > 0 && syncedParties.length > 0) {
+    syncedAlliances.forEach(a => {
+        const allianceParties = syncedParties.filter(p => p.alliance === a.id);
+        a.seatsContested = allianceParties.reduce((sum, p) => sum + (p.seatsContested || 0), 0);
+        a.candidates = allianceParties.reduce((sum, p) => sum + (p.candidates || 0), 0);
+        a.womenCandidates = allianceParties.reduce((sum, p) => sum + (p.womenCandidates || 0), 0);
+        a.maleCandidates = allianceParties.reduce((sum, p) => sum + (p.maleCandidates || 0), 0);
+    });
+}
+
+const TN_DATA = {
+    summary: {
+        totalSeats: 234,
+        totalCandidates: namedCands.length > 0 ? namedCands.length : 3997,
+        totalParties: pCount > 0 ? pCount : 185,
+        totalElectors: (typeof TN_CONSTITUENCIES_234 !== 'undefined') ? TN_CONSTITUENCIES_234.reduce((sum, c) => sum + (c.electors || 0), 0) : 57343291,
+        womenCandidates: namedCands.length > 0 ? wCands : 342,
+        womenPercent: namedCands.length > 0 && namedCands.length > 0 ? ((wCands / namedCands.length) * 100).toFixed(1) : 12.1,
+        projectedTurnout: 85.15,
+        districts: 38,
+    },
+    alliances: syncedAlliances,
+    parties: syncedParties,
+    districts: getDistricts(),
+    constituencies: syncedConstituencies,
+    candidates: getCands,
+    electorStats: {
+        total: syncedConstituencies.reduce((sum, c) => sum + (c.electors || 0), 0) || 57343291,
+        male: syncedConstituencies.reduce((sum, c) => sum + (c.male || 0), 0) || 28030658,
+        female: syncedConstituencies.reduce((sum, c) => sum + (c.female || 0), 0) || 29304905,
+        thirdGender: syncedConstituencies.reduce((sum, c) => {
+            const t = c.thirdGender !== undefined ? c.thirdGender : (c.other !== undefined ? c.other : (c.electors - c.male - c.female));
+            return sum + (t || 0);
+        }, 0) || 7728,
+        newVoters: 1459039,
+        youngVoters: 12177496,
+        seniorVoters: 1062752,
+        prevTurnout2021: 72.8,
+    },
+    historicalResults: typeof TN_HISTORICAL !== 'undefined' ? TN_HISTORICAL : [],
+};
+
+
