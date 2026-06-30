@@ -13,6 +13,7 @@ class MasterLayout extends HTMLElement {
     <a href="ebwhitepaper.html">Energy-Department-வெள்ளை அறிக்கை</a>
 	
     <a href="tnsaer2026.html">TN Result 2026</a>
+    <a href="tnsaerm.html">Map View – Tamil Nadu Assembly Election 2026</a>
 
 		
     </ul>
@@ -29,6 +30,8 @@ class MasterLayout extends HTMLElement {
     <a href="ebwhitepaper.html">Energy-Department-வெள்ளை அறிக்கை</a>
         
     <a href="tnsaer2026.html">TN Result 2026</a>
+	
+    <a href="tnsaerm.html">Map View – Tamil Nadu Assembly Election 2026</a>
 </div>
 
     `;
