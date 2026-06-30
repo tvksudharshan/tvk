@@ -11,7 +11,10 @@ class MasterLayout extends HTMLElement {
     <a href="index.html">முகப்புப் பக்கம் (Home)</a>
 		<a href="whitepaper.html">வெள்ளை அறிக்கை (TN Finance White Paper)</a>
     <a href="ebwhitepaper.html">Energy-Department-வெள்ளை அறிக்கை</a>
-        
+	
+    <a href="tnsaer2026.html">TN Result 2026</a>
+
+		
     </ul>
 
     <div class="menu-btn" onclick="openMenu()">☰</div>
@@ -25,6 +28,7 @@ class MasterLayout extends HTMLElement {
 		<a href="whitepaper.html">வெள்ளை அறிக்கை (TN Finance White Paper)</a>
     <a href="ebwhitepaper.html">Energy-Department-வெள்ளை அறிக்கை</a>
         
+    <a href="tnsaer2026.html">TN Result 2026</a>
 </div>
 
     `;
