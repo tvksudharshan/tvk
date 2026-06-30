@@ -14,6 +14,7 @@ class MasterLayout extends HTMLElement {
 	
     <a href="tnsaer2026.html">TN Result 2026</a>
     <a href="tnsaerm.html">Map View – Tamil Nadu Assembly Election 2026</a>
+<a href="officials.html">Office Bearers – Tamil Nadu Assembly Election 2026</a>
 
 		
     </ul>
